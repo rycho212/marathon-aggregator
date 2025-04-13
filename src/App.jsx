@@ -1,4 +1,42 @@
 import React, { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+const [startDate, setStartDate] = useState(null);
+const [endDate, setEndDate] = useState(null);
+
+<div className="flex gap-4 mb-4 justify-center">
+  <div>
+    <label className="block text-sm text-gray-700">Start Date</label>
+    <DatePicker
+      selected={startDate}
+      onChange={(date) => setStartDate(date)}
+      className="border px-3 py-1 rounded"
+      placeholderText="Select start date"
+    />
+  </div>
+  <div>
+    <label className="block text-sm text-gray-700">End Date</label>
+    <DatePicker
+      selected={endDate}
+      onChange={(date) => setEndDate(date)}
+      className="border px-3 py-1 rounded"
+      placeholderText="Select end date"
+    />
+  </div>
+</div>
+
+const filteredMarathons = marathons.filter((marathon) => {
+  const nameMatch =
+    marathon.name.toLowerCase().includes(search.toLowerCase()) ||
+    marathon.location.toLowerCase().includes(search.toLowerCase());
+
+  const marathonDate = new Date(marathon.date);
+  const withinStart = !startDate || marathonDate >= startDate;
+  const withinEnd = !endDate || marathonDate <= endDate;
+
+  return nameMatch && withinStart && withinEnd;
+});
 
 const marathons = [
   {
