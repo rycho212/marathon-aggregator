@@ -14,6 +14,12 @@ const marathons = [
     website: "https://www.chicagomarathon.com"
   },
   {
+    name: "Miami Marathon",
+    location: "Miami, FL",
+    date: "2025-01-26",
+    website: "https://www.themiamimarathon.com"
+  },
+  {
     name: "New York City Marathon",
     location: "New York, NY",
     date: "2025-11-02",
