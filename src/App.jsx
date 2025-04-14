@@ -2,88 +2,46 @@ import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const [startDate, setStartDate] = useState(null);
-const [endDate, setEndDate] = useState(null);
+import { useEffect, useState } from "react";
 
-<div className="flex gap-4 mb-4 justify-center">
-  <div>
-    <label className="block text-sm text-gray-700">Start Date</label>
-    <DatePicker
-      selected={startDate}
-      onChange={(date) => setStartDate(date)}
-      className="border px-3 py-1 rounded"
-      placeholderText="Select start date"
-    />
-  </div>
-  <div>
-    <label className="block text-sm text-gray-700">End Date</label>
-    <DatePicker
-      selected={endDate}
-      onChange={(date) => setEndDate(date)}
-      className="border px-3 py-1 rounded"
-      placeholderText="Select end date"
-    />
-  </div>
-</div>
+export default function App() {
+  const [marathons, setMarathons] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const filteredMarathons = marathons.filter((marathon) => {
-  const nameMatch =
-    marathon.name.toLowerCase().includes(search.toLowerCase()) ||
-    marathon.location.toLowerCase().includes(search.toLowerCase());
-
-  const marathonDate = new Date(marathon.date);
-  const withinStart = !startDate || marathonDate >= startDate;
-  const withinEnd = !endDate || marathonDate <= endDate;
-
-  return nameMatch && withinStart && withinEnd;
-});
-
-const marathons = [
-  {
-    name: "Boston Marathon",
-    location: "Boston, MA",
-    date: "2025-04-21",
-    website: "https://www.baa.org"
-  },
-  {
-    name: "Chicago Marathon",
-    location: "Chicago, IL",
-    date: "2025-10-12",
-    website: "https://www.chicagomarathon.com"
-  },
-  {
-    name: "Miami Marathon",
-    location: "Miami, FL",
-    date: "2025-01-26",
-    website: "https://www.themiamimarathon.com"
-  },
-  {
-    name: "New York City Marathon",
-    location: "New York, NY",
-    date: "2025-11-02",
-    website: "https://www.nyrr.org"
-  },
-  {
-    name: "Los Angeles Marathon",
-    location: "Los Angeles, CA",
-    date: "2025-03-09",
-    website: "https://www.lamarathon.com"
-  },
-  {
-    name: "Marine Corps Marathon",
-    location: "Washington, D.C.",
-    date: "2025-10-26",
-    website: "https://www.marinemarathon.com"
-  }
-];
+  useEffect(() => {
+    fetch("https://runsignup.com/rest/races?event_type=R&format=json&limit=20")
+      .then(res => res.json())
+      .then(data => {
+        const simplified = data.races.map((race) => ({
+          name: race.name,
+          location: `${race.city}, ${race.state}`,
+          date: race.event_date || "TBD",
+          website: race.registration_url
+        }));
+        setMarathons(simplified);
+        setLoading(false);
+      });
+  }, []);
+  
+  // Render your filteredMarathons using this.marathons
+}
 
 export default function App() {
   const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
-  const filteredMarathons = marathons.filter((marathon) =>
-    marathon.name.toLowerCase().includes(search.toLowerCase()) ||
-    marathon.location.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredMarathons = marathons.filter((marathon) => {
+    const nameMatch =
+      marathon.name.toLowerCase().includes(search.toLowerCase()) ||
+      marathon.location.toLowerCase().includes(search.toLowerCase());
+
+    const marathonDate = new Date(marathon.date);
+    const withinStart = !startDate || marathonDate >= startDate;
+    const withinEnd = !endDate || marathonDate <= endDate;
+
+    return nameMatch && withinStart && withinEnd;
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
@@ -95,6 +53,26 @@ export default function App() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+      </div>
+      <div className="flex gap-4 mb-6 justify-center">
+        <div>
+          <label className="block text-sm text-gray-700">Start Date</label>
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            className="border px-3 py-1 rounded"
+            placeholderText="Select start date"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700">End Date</label>
+          <DatePicker
+            selected={endDate}
+            onChange={(date) => setEndDate(date)}
+            className="border px-3 py-1 rounded"
+            placeholderText="Select end date"
+          />
+        </div>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredMarathons.map((marathon, index) => (
