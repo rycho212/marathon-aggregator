@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 export default function App() {
   const [marathons, setMarathons] = useState([]);
   const [loading, setLoading] = useState(true);
-
+// adding test line
   useEffect(() => {
     fetch("https://runsignup.com/rest/races?event_type=R&format=json&limit=20")
       .then(res => res.json())
