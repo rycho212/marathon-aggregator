@@ -20,7 +20,75 @@ export interface Race {
   elevation?: number; // gain in meters
   isFeatured?: boolean;
   organizerName?: string;
+
+  // NEW: Enhanced race characteristics for recommendations
+  characteristics?: RaceCharacteristics;
+  vibes?: RaceVibe[];
+  tags?: string[];
+  avgRating?: number;
+  reviewCount?: number;
+  difficultyRating?: 1 | 2 | 3 | 4 | 5; // 1=easy, 5=brutal
 }
+
+// Detailed race characteristics for filtering & recommendations
+export interface RaceCharacteristics {
+  // Course profile
+  isFlat?: boolean;
+  isHilly?: boolean;
+  isScenic?: boolean;
+  isFastCourse?: boolean;       // Known for PRs
+  isLooped?: boolean;           // vs point-to-point
+  isBQQualifier?: boolean;      // Boston Qualifier eligible
+
+  // Organization & amenities
+  isWellOrganized?: boolean;
+  hasExpo?: boolean;
+  hasPacers?: boolean;
+  hasGoodSwag?: boolean;
+  hasQualityMedal?: boolean;
+  hasPostRaceParty?: boolean;
+  hasAidStations?: boolean;     // For trail/ultras
+  hasCutoffTimes?: boolean;
+
+  // Crowd & vibe
+  fieldSize?: 'small' | 'medium' | 'large' | 'massive';
+  crowdSupport?: 'none' | 'sparse' | 'moderate' | 'great' | 'legendary';
+
+  // Accessibility
+  isBeginnerFriendly?: boolean;
+  isFamilyFriendly?: boolean;
+  isStrollerFriendly?: boolean;
+  isWheelchairAccessible?: boolean;
+
+  // Special types
+  isVirtual?: boolean;
+  isCharity?: boolean;
+  isThemed?: boolean;           // Costume, color run, etc.
+  isNightRace?: boolean;
+  isHolidayRace?: boolean;      // Turkey trot, etc.
+
+  // Experience level recommended
+  recommendedFor?: ('beginner' | 'intermediate' | 'advanced' | 'elite')[];
+}
+
+// Vibe tags for the "race personality" matching
+export type RaceVibe =
+  | 'competitive'
+  | 'social'
+  | 'scenic'
+  | 'challenging'
+  | 'beginner-friendly'
+  | 'family'
+  | 'party'
+  | 'adventure'
+  | 'bucket-list'
+  | 'local-favorite'
+  | 'hidden-gem'
+  | 'iconic'
+  | 'fast'
+  | 'brutal'
+  | 'zen'
+  | 'wild';
 
 export interface RaceFilters {
   search: string;
@@ -30,6 +98,13 @@ export interface RaceFilters {
   location: string;
   terrain: string[];
   maxPrice?: number;
+
+  // NEW: Enhanced filters
+  vibes?: RaceVibe[];
+  characteristics?: Partial<RaceCharacteristics>;
+  difficultyRange?: [number, number]; // [min, max]
+  fieldSize?: RaceCharacteristics['fieldSize'][];
+  maxDistance?: number; // km from user
 }
 
 export interface Location {
@@ -38,4 +113,12 @@ export interface Location {
   country: string;
   latitude?: number;
   longitude?: number;
+}
+
+// For the personalized feed
+export interface FeedItem {
+  race: Race;
+  relevanceScore: number;
+  matchReasons: string[];
+  section?: 'for-you' | 'near-you' | 'bucket-list' | 'coming-soon' | 'trending';
 }

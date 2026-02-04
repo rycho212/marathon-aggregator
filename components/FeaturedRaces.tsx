@@ -15,7 +15,8 @@ import { Race } from '@/data/types';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth * 0.85;
+// Card width: 72% on mobile, max 320px on larger screens
+const CARD_WIDTH = Math.min(screenWidth * 0.72, 320);
 
 interface FeaturedRacesProps {
   races: Race[];
