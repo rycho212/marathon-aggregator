@@ -11,7 +11,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
           backgroundColor: Colors.backgroundLight,
-          borderTopColor: Colors.backgroundCard,
+          borderTopColor: '#E2E8F0',
           borderTopWidth: 1,
           paddingTop: Spacing.xs,
           paddingBottom: Platform.OS === 'ios' ? Spacing.lg : Spacing.sm,

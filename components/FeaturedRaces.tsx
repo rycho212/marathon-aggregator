@@ -22,12 +22,13 @@ interface FeaturedRacesProps {
   onRacePress?: (race: Race) => void;
 }
 
+// Mint Fresh gradient colors for featured cards
 const categoryColors: Record<string, [string, string]> = {
-  '5k': ['#4ECDC4', '#2CB5AC'],
-  '10k': ['#45B7D1', '#2E97B0'],
-  'half': ['#96C93D', '#7AB32A'],
-  'marathon': ['#FF6B35', '#E85A2C'],
-  'ultra': ['#9B59B6', '#7D4896'],
+  '5k': ['#00C9A7', '#00A88C'],      // Mint green
+  '10k': ['#4299E1', '#3182CE'],     // Bright blue
+  'half': ['#ECC94B', '#D69E2E'],    // Golden yellow
+  'marathon': ['#FC8181', '#F56565'], // Soft coral
+  'ultra': ['#B794F4', '#9F7AEA'],   // Lavender purple
 };
 
 export default function FeaturedRaces({ races, onRacePress }: FeaturedRacesProps) {
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   distanceText: {
-    color: Colors.text,
+    color: '#FFFFFF',
     fontSize: FontSizes.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   raceName: {
     fontSize: FontSizes.xl,
     fontWeight: '800',
-    color: Colors.text,
+    color: '#FFFFFF',
     marginBottom: Spacing.xs,
   },
   infoRow: {
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.text,
+    backgroundColor: '#FFFFFF',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   registerText: {
-    color: Colors.background,
+    color: '#1A1A2E',
     fontSize: FontSizes.sm,
     fontWeight: '700',
   },

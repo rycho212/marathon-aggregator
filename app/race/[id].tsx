@@ -23,12 +23,13 @@ import {
   Shadows,
 } from '@/constants/theme';
 
+// Mint Fresh gradient colors
 const categoryColors: Record<string, [string, string]> = {
-  '5k': ['#4ECDC4', '#2CB5AC'],
-  '10k': ['#45B7D1', '#2E97B0'],
-  half: ['#96C93D', '#7AB32A'],
-  marathon: ['#FF6B35', '#E85A2C'],
-  ultra: ['#9B59B6', '#7D4896'],
+  '5k': ['#00C9A7', '#00A88C'],      // Mint green
+  '10k': ['#4299E1', '#3182CE'],     // Bright blue
+  half: ['#ECC94B', '#D69E2E'],      // Golden yellow
+  marathon: ['#FC8181', '#F56565'],  // Soft coral
+  ultra: ['#B794F4', '#9F7AEA'],     // Lavender purple
 };
 
 export default function RaceDetailScreen() {
@@ -84,13 +85,13 @@ export default function RaceDetailScreen() {
           headerRight: () => (
             <View style={styles.headerActions}>
               <Pressable onPress={handleShare} style={styles.headerButton}>
-                <Ionicons name="share-outline" size={24} color={Colors.text} />
+                <Ionicons name="share-outline" size={24} color="#FFFFFF" />
               </Pressable>
               <Pressable onPress={handleSave} style={styles.headerButton}>
                 <Ionicons
                   name={isSaved ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={isSaved ? Colors.error : Colors.text}
+                  color={isSaved ? Colors.error : '#FFFFFF'}
                 />
               </Pressable>
             </View>
@@ -116,7 +117,7 @@ export default function RaceDetailScreen() {
                   <Ionicons
                     name={race.terrain === 'trail' ? 'trail-sign' : 'speedometer'}
                     size={14}
-                    color={Colors.text}
+                    color="#FFFFFF"
                   />
                   <Text style={styles.badgeText}>
                     {race.terrain.charAt(0).toUpperCase() + race.terrain.slice(1)}
@@ -241,7 +242,7 @@ export default function RaceDetailScreen() {
           onPress={handleRegister}
         >
           <Text style={styles.registerText}>Register Now</Text>
-          <Ionicons name="arrow-forward" size={20} color={Colors.text} />
+          <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
         </Pressable>
       </View>
     </>
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   badgeText: {
-    color: Colors.text,
+    color: '#FFFFFF',
     fontSize: FontSizes.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: FontSizes.xxl,
     fontWeight: '800',
-    color: Colors.text,
+    color: '#FFFFFF',
     marginBottom: Spacing.sm,
   },
   heroInfo: {
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.backgroundLight,
+    borderBottomColor: '#E2E8F0',
     gap: Spacing.sm,
   },
   detailLabel: {
@@ -412,7 +413,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Platform.OS === 'ios' ? Spacing.xl : Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.backgroundCard,
+    borderTopColor: '#E2E8F0',
   },
   registerButton: {
     flexDirection: 'row',
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   registerText: {
-    color: Colors.text,
+    color: '#FFFFFF',
     fontSize: FontSizes.lg,
     fontWeight: '700',
   },
