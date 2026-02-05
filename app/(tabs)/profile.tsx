@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, FontWeights, BorderRadius, Shadows } from '@/constants/theme';
@@ -9,29 +10,34 @@ import {
   getPersonalityDescription,
   calculatePersonalityType,
 } from '@/data/runnerProfile';
+import { useSavedRaces } from '@/contexts/SavedRacesContext';
 import PersonalityQuiz from '@/components/PersonalityQuiz';
 import PersonalityProfile from '@/components/PersonalityProfile';
 
 const menuItems = [
   {
-    icon: 'fitness-outline',
-    label: 'Running Goals',
-    description: 'Set and track your running goals',
+    icon: 'flag-outline',
+    label: 'Race Goals',
+    description: 'Set and track your race goals',
+    route: '/goals',
   },
   {
     icon: 'trophy-outline',
     label: 'Race History',
     description: 'View your past races and results',
+    route: null,
   },
   {
     icon: 'notifications-outline',
     label: 'Notifications',
     description: 'Manage race alerts and reminders',
+    route: '/settings',
   },
   {
     icon: 'settings-outline',
     label: 'Settings',
     description: 'App preferences and account settings',
+    route: '/settings',
   },
 ];
 
@@ -62,6 +68,8 @@ const createDemoPersonality = (): RunnerPersonality => ({
 });
 
 export default function ProfileScreen() {
+  const router = useRouter();
+  const { savedRaces } = useSavedRaces();
   const [showQuiz, setShowQuiz] = useState(false);
   const [personality, setPersonality] = useState<RunnerPersonality | null>(null);
   const [showPersonalityDetail, setShowPersonalityDetail] = useState(false);
@@ -185,10 +193,13 @@ export default function ProfileScreen() {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>0</Text>
+          <Pressable
+            style={styles.statItem}
+            onPress={() => router.push('/saved')}
+          >
+            <Text style={styles.statNumber}>{savedRaces.length}</Text>
             <Text style={styles.statLabel}>Saved</Text>
-          </View>
+          </Pressable>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>0</Text>
@@ -230,6 +241,7 @@ export default function ProfileScreen() {
                 styles.menuItem,
                 pressed && styles.menuItemPressed,
               ]}
+              onPress={() => item.route && router.push(item.route as any)}
             >
               <View style={styles.menuIconContainer}>
                 <Ionicons

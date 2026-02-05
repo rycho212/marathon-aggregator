@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RaceCard, CategoryFilter } from '@/components';
 import { Race, RaceFilters } from '@/data/types';
 import { filterRaces, getMockRaces, fetchRacesFromRunSignUp } from '@/services/raceService';
+import { useSavedRaces } from '@/contexts/SavedRacesContext';
 import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
 
 // US states for location filter
@@ -27,6 +28,7 @@ const US_STATES = [
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { toggleSaveRace, isRaceSaved } = useSavedRaces();
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<RaceFilters>({
@@ -291,7 +293,12 @@ export default function SearchScreen() {
         data={hasActiveFilters ? filteredRaces : []}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <RaceCard race={item} onPress={handleRacePress} />
+          <RaceCard
+            race={item}
+            onPress={handleRacePress}
+            onSave={toggleSaveRace}
+            isSaved={isRaceSaved(item.id)}
+          />
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={hasActiveFilters ? renderEmptyState : null}

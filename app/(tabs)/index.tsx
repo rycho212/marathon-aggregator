@@ -22,10 +22,12 @@ import {
   filterRaces,
   getMockRaces,
 } from '@/services/raceService';
+import { useSavedRaces } from '@/contexts/SavedRacesContext';
 import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
 
 export default function DiscoverScreen() {
   const router = useRouter();
+  const { toggleSaveRace, isRaceSaved, savedRaces } = useSavedRaces();
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -87,6 +89,12 @@ export default function DiscoverScreen() {
             <Text style={styles.statNumber}>{races.length}</Text>
             <Text style={styles.statLabel}>Races</Text>
           </View>
+          {savedRaces.length > 0 && (
+            <View style={[styles.stat, { marginTop: Spacing.xs }]}>
+              <Text style={styles.statNumber}>{savedRaces.length}</Text>
+              <Text style={styles.statLabel}>Saved</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -157,7 +165,12 @@ export default function DiscoverScreen() {
         data={upcomingRaces}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <RaceCard race={item} onPress={handleRacePress} />
+          <RaceCard
+            race={item}
+            onPress={handleRacePress}
+            onSave={toggleSaveRace}
+            isSaved={isRaceSaved(item.id)}
+          />
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyState}

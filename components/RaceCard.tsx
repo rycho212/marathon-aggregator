@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Pressable,
   Linking,
-  Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -15,6 +15,8 @@ import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, Shadows } from '
 interface RaceCardProps {
   race: Race;
   onPress?: (race: Race) => void;
+  onSave?: (race: Race) => void;
+  isSaved?: boolean;
 }
 
 const categoryColors: Record<string, string> = {
@@ -25,13 +27,28 @@ const categoryColors: Record<string, string> = {
   'ultra': Colors.distanceUltra,
 };
 
-export default function RaceCard({ race, onPress }: RaceCardProps) {
+// Fallback images for different terrains/categories
+const fallbackImages: Record<string, string> = {
+  trail: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=300&fit=crop',
+  road: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
+  marathon: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&h=300&fit=crop',
+  ultra: 'https://images.unsplash.com/photo-1682686580391-615b1f28e5ee?w=400&h=300&fit=crop',
+  default: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=300&fit=crop',
+};
+
+export default function RaceCard({ race, onPress, onSave, isSaved = false }: RaceCardProps) {
   const raceDate = new Date(race.date);
   const categoryColor = categoryColors[race.category] || Colors.primary;
 
   const handlePress = () => {
     if (onPress) {
       onPress(race);
+    }
+  };
+
+  const handleSave = () => {
+    if (onSave) {
+      onSave(race);
     }
   };
 
@@ -48,6 +65,16 @@ export default function RaceCard({ race, onPress }: RaceCardProps) {
     return parts.join(', ');
   };
 
+  const getImageUrl = () => {
+    if (race.imageUrl && !race.imageUrl.includes('voices')) {
+      return race.imageUrl + '?w=400&h=300&fit=crop';
+    }
+    if (race.terrain === 'trail') return fallbackImages.trail;
+    if (race.category === 'ultra') return fallbackImages.ultra;
+    if (race.category === 'marathon') return fallbackImages.marathon;
+    return fallbackImages.default;
+  };
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -56,17 +83,36 @@ export default function RaceCard({ race, onPress }: RaceCardProps) {
       ]}
       onPress={handlePress}
     >
-      {/* Category indicator bar */}
-      <View style={[styles.categoryBar, { backgroundColor: categoryColor }]} />
+      {/* Race image */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: getImageUrl() }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+        {/* Save button overlay */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.saveButton,
+            pressed && styles.saveButtonPressed,
+          ]}
+          onPress={handleSave}
+        >
+          <Ionicons
+            name={isSaved ? 'heart' : 'heart-outline'}
+            size={20}
+            color={isSaved ? '#EF4444' : '#FFFFFF'}
+          />
+        </Pressable>
+        {/* Distance badge on image */}
+        <View style={[styles.imageBadge, { backgroundColor: categoryColor }]}>
+          <Text style={styles.imageBadgeText}>{race.distanceLabel}</Text>
+        </View>
+      </View>
 
       <View style={styles.content}>
-        {/* Header row */}
+        {/* Header with featured badge */}
         <View style={styles.header}>
-          <View style={[styles.badge, { backgroundColor: categoryColor + '20' }]}>
-            <Text style={[styles.badgeText, { color: categoryColor }]}>
-              {race.distanceLabel}
-            </Text>
-          </View>
           {race.isFeatured && (
             <View style={styles.featuredBadge}>
               <Ionicons name="star" size={12} color={Colors.warning} />
@@ -82,29 +128,29 @@ export default function RaceCard({ race, onPress }: RaceCardProps) {
 
         {/* Date */}
         <View style={styles.row}>
-          <Ionicons name="calendar-outline" size={16} color={Colors.textSecondary} />
+          <Ionicons name="calendar-outline" size={15} color={Colors.textSecondary} />
           <Text style={styles.detailText}>
-            {format(raceDate, 'EEEE, MMMM d, yyyy')}
+            {format(raceDate, 'MMM d, yyyy')}
           </Text>
         </View>
 
         {/* Location */}
         <View style={styles.row}>
-          <Ionicons name="location-outline" size={16} color={Colors.textSecondary} />
-          <Text style={styles.detailText}>{formatLocation()}</Text>
+          <Ionicons name="location-outline" size={15} color={Colors.textSecondary} />
+          <Text style={styles.detailText} numberOfLines={1}>{formatLocation()}</Text>
         </View>
 
-        {/* Terrain badge if available */}
+        {/* Terrain */}
         {race.terrain && (
           <View style={styles.row}>
             <Ionicons
               name={race.terrain === 'trail' ? 'trail-sign-outline' : 'speedometer-outline'}
-              size={16}
+              size={15}
               color={Colors.textSecondary}
             />
             <Text style={styles.detailText}>
               {race.terrain.charAt(0).toUpperCase() + race.terrain.slice(1)}
-              {race.elevation ? ` • ${race.elevation}m elevation` : ''}
+              {race.elevation ? ` • ${race.elevation}m` : ''}
             </Text>
           </View>
         )}
@@ -119,7 +165,7 @@ export default function RaceCard({ race, onPress }: RaceCardProps) {
             )}
             {race.spotsRemaining && race.totalSpots && (
               <Text style={styles.spots}>
-                {race.spotsRemaining.toLocaleString()} spots left
+                {race.spotsRemaining.toLocaleString()} spots
               </Text>
             )}
           </View>
@@ -132,7 +178,7 @@ export default function RaceCard({ race, onPress }: RaceCardProps) {
             onPress={handleRegister}
           >
             <Text style={styles.registerText}>Register</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
@@ -147,36 +193,57 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
     marginVertical: Spacing.sm,
     overflow: 'hidden',
-    flexDirection: 'row',
     ...Shadows.md,
   },
   cardPressed: {
-    opacity: 0.9,
+    opacity: 0.95,
     transform: [{ scale: 0.99 }],
   },
-  categoryBar: {
-    width: 4,
+  imageContainer: {
+    position: 'relative',
+    height: 140,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.backgroundAccent,
+  },
+  saveButton: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButtonPressed: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  imageBadge: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    left: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  imageBadgeText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semibold,
+    textTransform: 'uppercase',
   },
   content: {
-    flex: 1,
     padding: Spacing.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  badge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
-  },
-  badgeText: {
-    fontSize: FontSizes.xs,
-    fontWeight: FontWeights.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginBottom: Spacing.xs,
+    minHeight: 18,
   },
   featuredBadge: {
     flexDirection: 'row',
@@ -189,34 +256,35 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
   name: {
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.md,
     fontWeight: FontWeights.semibold,
     color: Colors.text,
     marginBottom: Spacing.sm,
-    lineHeight: FontSizes.lg * 1.3,
+    lineHeight: FontSizes.md * 1.3,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
+    gap: Spacing.xs,
+    marginBottom: 4,
   },
   detailText: {
     color: Colors.textSecondary,
     fontSize: FontSizes.sm,
+    flex: 1,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.md,
-    paddingTop: Spacing.md,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.backgroundLight,
+    borderTopColor: Colors.border,
   },
   price: {
     color: Colors.text,
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.md,
     fontWeight: FontWeights.semibold,
   },
   spots: {
@@ -228,8 +296,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
   },
   registerButtonPressed: {
