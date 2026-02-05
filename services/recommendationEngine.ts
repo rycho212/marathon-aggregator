@@ -5,6 +5,8 @@ import { Race } from '@/data/types';
 import {
   RunnerProfile,
   RunnerPersonality,
+  RunnerPreferences,
+  RunnerBehavior,
   PersonalityType,
   calculatePersonalityType,
 } from '@/data/runnerProfile';

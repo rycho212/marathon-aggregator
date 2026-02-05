@@ -44,14 +44,14 @@ export default function PersonalityQuiz({ onComplete, onSkip }: PersonalityQuizP
   const questions = personalityQuizQuestions;
   const progress = (currentQuestion + 1) / questions.length;
 
-  const handleAnswer = (questionId: string, optionValue: string, traitChanges: Record<string, number>) => {
+  const handleAnswer = (questionId: string, optionValue: string, traitChanges: Partial<Record<string, number>>) => {
     // Update answers
     setAnswers(prev => ({ ...prev, [questionId]: optionValue }));
 
     // Update traits
     const newTraits = { ...traits };
     Object.entries(traitChanges).forEach(([trait, change]) => {
-      if (trait in newTraits) {
+      if (trait in newTraits && change !== undefined) {
         newTraits[trait as keyof typeof newTraits] = Math.max(0, Math.min(100,
           newTraits[trait as keyof typeof newTraits] + change
         ));
