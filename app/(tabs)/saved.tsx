@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing, FontSizes } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
 
 export default function SavedScreen() {
   return (
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 140,
     height: 140,
-    borderRadius: 70,
+    borderRadius: BorderRadius.lg,
     backgroundColor: Colors.backgroundCard,
     justifyContent: 'center',
     alignItems: 'center',
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSizes.xl,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
     marginBottom: Spacing.sm,
   },
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     backgroundColor: Colors.backgroundCard,
     padding: Spacing.md,
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
     marginTop: Spacing.xl,
     gap: Spacing.sm,
   },

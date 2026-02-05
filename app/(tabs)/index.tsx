@@ -22,7 +22,7 @@ import {
   filterRaces,
   getMockRaces,
 } from '@/services/raceService';
-import { Colors, Spacing, FontSizes } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
 
 export default function DiscoverScreen() {
   const router = useRouter();
@@ -206,9 +206,9 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: FontSizes.hero,
-    fontWeight: '800',
+    fontWeight: FontWeights.bold,
     color: Colors.text,
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   statsContainer: {
     alignItems: 'flex-end',
@@ -218,11 +218,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
   },
   statNumber: {
     fontSize: FontSizes.xl,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.primary,
   },
   statLabel: {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FontSizes.lg,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     color: Colors.text,
   },
   sectionCount: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: FontSizes.xl,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     color: Colors.text,
     marginTop: Spacing.md,
   },

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, FontWeights, BorderRadius, Shadows } from '@/constants/theme';
 import {
   RunnerPersonality,
   getPersonalityDescription,
@@ -253,9 +253,9 @@ export default function ProfileScreen() {
 
         {/* Version info */}
         <View style={styles.footer}>
-          <Text style={styles.version}>RaceRadar v1.0.0</Text>
+          <Text style={styles.version}>GetABib v1.0.0</Text>
           <Text style={styles.copyright}>
-            Built with ❤️ for runners everywhere
+            Built for runners everywhere
           </Text>
         </View>
       </ScrollView>
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
     width: 88,
     height: 88,
-    borderRadius: 44,
+    borderRadius: BorderRadius.lg,
     backgroundColor: Colors.backgroundCard,
     justifyContent: 'center',
     alignItems: 'center',
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: FontSizes.xl,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.md,
     gap: Spacing.xs,
   },
   signInButtonPressed: {
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   signInText: {
     color: '#FFFFFF',
     fontSize: FontSizes.md,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
   // Personality Card (when they have one)
   personalityCard: {
@@ -333,14 +333,14 @@ const styles = StyleSheet.create({
   personalityLabel: {
     fontSize: FontSizes.xs,
     color: 'rgba(255,255,255,0.7)',
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   personalityType: {
     fontSize: FontSizes.lg,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
   },
   personalityDesc: {
     fontSize: FontSizes.sm,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   discoverIconContainer: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: BorderRadius.lg,
     backgroundColor: Colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   discoverTitle: {
     fontSize: FontSizes.lg,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   discoverButtonText: {
     color: '#FFFFFF',
     fontSize: FontSizes.md,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
   // Stats
   statsContainer: {
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: FontSizes.xxl,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
   },
   statLabel: {
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   menuIconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: BorderRadius.md,
     backgroundColor: Colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     fontSize: FontSizes.md,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     color: Colors.text,
     marginBottom: 2,
   },
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   },
   detailTitle: {
     fontSize: FontSizes.lg,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
   },
 });

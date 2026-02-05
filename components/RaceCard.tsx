@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Race } from '@/data/types';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '@/constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, Shadows } from '@/constants/theme';
 
 interface RaceCardProps {
   race: Race;
@@ -132,7 +132,7 @@ export default function RaceCard({ race, onPress }: RaceCardProps) {
             onPress={handleRegister}
           >
             <Text style={styles.registerText}>Register</Text>
-            <Ionicons name="arrow-forward" size={16} color={Colors.text} />
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: FontSizes.xs,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -186,11 +186,11 @@ const styles = StyleSheet.create({
   featuredText: {
     color: Colors.warning,
     fontSize: FontSizes.xs,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
   name: {
     fontSize: FontSizes.lg,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
     marginBottom: Spacing.sm,
     lineHeight: FontSizes.lg * 1.3,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   price: {
     color: Colors.text,
     fontSize: FontSizes.lg,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
   },
   spots: {
     color: Colors.textMuted,
@@ -230,14 +230,14 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.sm,
   },
   registerButtonPressed: {
     opacity: 0.8,
   },
   registerText: {
-    color: Colors.text,
+    color: '#FFFFFF',
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
 });

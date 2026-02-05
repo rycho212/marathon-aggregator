@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RaceCard, CategoryFilter } from '@/components';
 import { Race, RaceFilters } from '@/data/types';
 import { filterRaces, getMockRaces, fetchRacesFromRunSignUp } from '@/services/raceService';
-import { Colors, Spacing, FontSizes, BorderRadius } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
 
 // US states for location filter
 const US_STATES = [
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     color: Colors.textSecondary,
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     marginLeft: Spacing.md,
     marginBottom: Spacing.sm,
     marginTop: Spacing.sm,
@@ -377,8 +377,8 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
   },
   locationOptionTextSelected: {
-    color: Colors.text,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: FontWeights.medium,
   },
   terrainContainer: {
     flexDirection: 'row',
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.md,
     gap: Spacing.xs,
   },
   terrainChipSelected: {
@@ -402,8 +402,8 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
   },
   terrainTextSelected: {
-    color: Colors.text,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: FontWeights.medium,
   },
   activeFiltersBar: {
     flexDirection: 'row',
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   resultsCount: {
     color: Colors.text,
     fontSize: FontSizes.md,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
   clearButton: {
     paddingVertical: Spacing.xs,
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   clearText: {
     color: Colors.primary,
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
   recentContainer: {
     marginTop: Spacing.xl,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   recentTitle: {
     color: Colors.textSecondary,
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     marginBottom: Spacing.md,
   },
   recentChips: {
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.md,
     gap: Spacing.xs,
   },
   recentChipText: {
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: FontSizes.xl,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
     color: Colors.text,
     marginTop: Spacing.md,
   },

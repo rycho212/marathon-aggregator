@@ -1,28 +1,28 @@
 {
   "expo": {
-    "name": "RaceRadar",
-    "slug": "marathon-aggregator",
+    "name": "GetABib",
+    "slug": "getabib",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "raceradar",
-    "userInterfaceStyle": "automatic",
+    "scheme": "getabib",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#FAFBFC"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.raceradar.app"
+      "bundleIdentifier": "com.getabib.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#FAFBFC"
       },
-      "package": "com.raceradar.app"
+      "package": "com.getabib.app"
     },
     "web": {
       "bundler": "metro",

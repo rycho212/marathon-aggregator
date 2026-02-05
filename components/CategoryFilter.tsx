@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
-import { Colors, Spacing, BorderRadius, FontSizes, DistanceCategories } from '@/constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, DistanceCategories } from '@/constants/theme';
 
 interface CategoryFilterProps {
   selectedCategories: string[];
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCard,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.md,
     gap: Spacing.xs,
   },
   chipSelected: {
@@ -110,10 +110,10 @@ const styles = StyleSheet.create({
   chipText: {
     color: Colors.textSecondary,
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: FontWeights.medium,
   },
   chipTextSelected: {
-    color: Colors.text,
+    color: '#FFFFFF',
   },
   dot: {
     width: 8,

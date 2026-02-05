@@ -1,38 +1,42 @@
-// 🍃 Mint Fresh Theme
-// Clean, modern, and energizing - perfect for positive running vibes!
+// GetABib Theme
+// Clean, minimal, professional - a sleek race discovery platform
 
 export const Colors = {
-  // Primary brand colors - fresh mint green
+  // Primary brand color - single mint accent
   primary: '#00C9A7',
   primaryDark: '#00A88C',
-  primaryLight: '#5EEAD4',
+  primaryLight: '#E6FAF6',
 
-  // Secondary accents - warm coral pink
-  secondary: '#FF6F91',
-  secondaryDark: '#E85A7B',
+  // Keep secondary minimal
+  secondary: '#64748B',
+  secondaryDark: '#475569',
 
-  // Backgrounds - light and airy
-  background: '#F5FFFA',        // Mint cream
-  backgroundLight: '#FFFFFF',   // Pure white
-  backgroundCard: '#FFFFFF',    // White cards
-  backgroundAccent: '#E8FFF5',  // Light mint for accents
+  // Backgrounds - clean whites and grays
+  background: '#FAFBFC',
+  backgroundLight: '#FFFFFF',
+  backgroundCard: '#FFFFFF',
+  backgroundAccent: '#F1F5F9',
 
-  // Text - dark but not harsh
-  text: '#1A1A2E',
-  textSecondary: '#4A5568',
-  textMuted: '#A0AEC0',
+  // Text - professional gray scale
+  text: '#0F172A',
+  textSecondary: '#475569',
+  textMuted: '#94A3B8',
 
-  // Status colors
+  // Status colors - muted versions
   success: '#00C9A7',
-  warning: '#ECC94B',
-  error: '#FC8181',
+  warning: '#F59E0B',
+  error: '#EF4444',
 
-  // Distance category colors - vibrant but friendly
-  distance5k: '#00C9A7',       // Mint (matches primary)
-  distance10k: '#4299E1',      // Bright blue
-  distanceHalf: '#ECC94B',     // Golden yellow
-  distanceMarathon: '#FC8181', // Soft coral
-  distanceUltra: '#B794F4',    // Lavender purple
+  // Distance category colors - subtle, uniform tints
+  distance5k: '#00C9A7',
+  distance10k: '#00C9A7',
+  distanceHalf: '#00C9A7',
+  distanceMarathon: '#00C9A7',
+  distanceUltra: '#00C9A7',
+
+  // Borders
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
 };
 
 export const Spacing = {
@@ -44,52 +48,63 @@ export const Spacing = {
   xxl: 48,
 };
 
+// Less rounded - more professional
 export const BorderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  xs: 2,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 12,
   full: 9999,
 };
 
+// Slightly smaller, lighter fonts
 export const FontSizes = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
-  xl: 24,
-  xxl: 32,
-  hero: 48,
+  xs: 11,
+  sm: 13,
+  md: 15,
+  lg: 17,
+  xl: 22,
+  xxl: 28,
+  hero: 36,
+};
+
+// Thinner font weights
+export const FontWeights = {
+  normal: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
 };
 
 export const Shadows = {
   sm: {
-    shadowColor: '#1A1A2E',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  md: {
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
-  md: {
-    shadowColor: '#1A1A2E',
+  lg: {
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
-  lg: {
-    shadowColor: '#1A1A2E',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
 };
 
 export const DistanceCategories = [
-  { id: '5k', label: '5K', color: Colors.distance5k, minKm: 0, maxKm: 5.5 },
-  { id: '10k', label: '10K', color: Colors.distance10k, minKm: 5.5, maxKm: 12 },
-  { id: 'half', label: 'Half Marathon', color: Colors.distanceHalf, minKm: 12, maxKm: 25 },
-  { id: 'marathon', label: 'Marathon', color: Colors.distanceMarathon, minKm: 25, maxKm: 50 },
-  { id: 'ultra', label: 'Ultra', color: Colors.distanceUltra, minKm: 50, maxKm: Infinity },
+  { id: '5k', label: '5K', color: Colors.primary, minKm: 0, maxKm: 5.5 },
+  { id: '10k', label: '10K', color: Colors.primary, minKm: 5.5, maxKm: 12 },
+  { id: 'half', label: 'Half', color: Colors.primary, minKm: 12, maxKm: 25 },
+  { id: 'marathon', label: 'Marathon', color: Colors.primary, minKm: 25, maxKm: 50 },
+  { id: 'ultra', label: 'Ultra', color: Colors.primary, minKm: 50, maxKm: Infinity },
 ];

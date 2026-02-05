@@ -1,4 +1,4 @@
-# 🏃 RaceRadar - Marathon & Race Aggregator
+# 🏃 GetABib - Marathon & Race Aggregator
 
 A beautiful, mobile-first app for discovering and signing up for endurance running races worldwide. From 5Ks to ultramarathons, find your next adventure.
 
@@ -12,8 +12,9 @@ A beautiful, mobile-first app for discovering and signing up for endurance runni
 - **Smart Search** - Filter by distance (5K to Ultra), location, terrain, and date
 - **Featured Races** - Highlighted carousel of popular and prestigious events
 - **Race Details** - Full information including elevation, pricing, and registration links
+- **Race Personality Quiz** - Get personalized race recommendations based on your running style
 - **Cross-Platform** - Works on iOS, Android, and Web from a single codebase
-- **Beautiful UI** - Dark theme with vibrant color accents for each distance category
+- **Professional UI** - Clean, minimal design with responsive sidebar navigation
 
 ## 🚀 Getting Started
 
@@ -74,31 +75,40 @@ marathon-aggregator/
 │   ├── RaceCard.tsx       # Race listing card
 │   ├── SearchBar.tsx      # Search input
 │   ├── CategoryFilter.tsx # Distance filter chips
-│   └── FeaturedRaces.tsx  # Featured carousel
+│   ├── FeaturedRaces.tsx  # Featured carousel
+│   ├── Sidebar.tsx        # Left navigation (desktop)
+│   ├── MobileNav.tsx      # Bottom navigation (mobile)
+│   ├── PersonalityQuiz.tsx # Race personality quiz
+│   └── PersonalityProfile.tsx # Personality results display
 ├── constants/             # Theme and constants
 │   └── theme.ts           # Colors, spacing, typography
-├── data/                  # Type definitions
-│   └── types.ts           # Race, Filter interfaces
+├── data/                  # Type definitions and data
+│   ├── types.ts           # Race, Filter interfaces
+│   └── runnerProfile.ts   # Personality types and quiz questions
 ├── services/              # API and data services
-│   └── raceService.ts     # Race fetching logic
+│   ├── raceService.ts     # Race fetching logic
+│   └── recommendationEngine.ts # Personalized race scoring
 └── assets/               # Images, fonts, etc.
 ```
 
 ## 🎨 Design System
 
-### Distance Categories
-Each race distance has its own color for easy identification:
-- **5K** - Teal (#4ECDC4)
-- **10K** - Blue (#45B7D1)
-- **Half Marathon** - Green (#96C93D)
-- **Marathon** - Orange (#FF6B35)
-- **Ultra** - Purple (#9B59B6)
+### Colors
+The app uses a clean, professional light theme:
+- **Primary**: Mint (#00C9A7)
+- **Background**: Light gray (#FAFBFC)
+- **Text**: Dark slate (#0F172A)
+- **Secondary text**: Gray (#475569)
 
-### Theme
-The app uses a dark theme with:
-- Background: Deep navy (#0F0F1A)
-- Cards: Dark blue (#16213E)
-- Primary accent: Vibrant orange (#FF6B35)
+### Typography
+- Clean, minimal sans-serif fonts
+- Light font weights for a sleek look
+- Clear hierarchy with consistent sizing
+
+### Layout
+- Responsive sidebar navigation for desktop/tablet (768px+)
+- Bottom navigation for mobile devices
+- Clean card-based content layout
 
 ## 🔌 Data Sources
 
@@ -143,4 +153,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-Built with ❤️ for runners everywhere
+Built for runners everywhere

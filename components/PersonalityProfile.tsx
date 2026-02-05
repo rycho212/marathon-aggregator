@@ -166,7 +166,7 @@ export default function PersonalityProfile({ personality, onRetakeQuiz }: Person
             icon="people"
             label="Runners like you"
             value={`${Math.floor(Math.random() * 15 + 10)}%`}
-            subtext="of RaceRadar users"
+            subtext="of GetABib users"
           />
           <FunFact
             icon="trophy"

@@ -1,92 +1,41 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing } from '@/constants/theme';
-import { Platform } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, useWindowDimensions, Platform } from 'react-native';
+import { Slot } from 'expo-router';
+import Sidebar from '@/components/Sidebar';
+import MobileNav from '@/components/MobileNav';
+import { Colors } from '@/constants/theme';
+
+const SIDEBAR_BREAKPOINT = 768;
 
 export default function TabLayout() {
+  const { width } = useWindowDimensions();
+  const showSidebar = width >= SIDEBAR_BREAKPOINT;
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: Colors.backgroundLight,
-          borderTopColor: '#E2E8F0',
-          borderTopWidth: 1,
-          paddingTop: Spacing.xs,
-          paddingBottom: Platform.OS === 'ios' ? Spacing.lg : Spacing.sm,
-          height: Platform.OS === 'ios' ? 88 : 64,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        headerStyle: {
-          backgroundColor: Colors.background,
-        },
-        headerTintColor: Colors.text,
-        headerTitleStyle: {
-          fontWeight: '700',
-        },
-        headerShadowVisible: false,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Discover',
-          headerShown: false,
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'compass' : 'compass-outline'}
-              size={26}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          headerShown: false,
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'search' : 'search-outline'}
-              size={26}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="saved"
-        options={{
-          title: 'Saved',
-          headerTitle: 'Saved Races',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'heart' : 'heart-outline'}
-              size={26}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          headerTitle: 'My Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'person' : 'person-outline'}
-              size={26}
-              color={color}
-            />
-          ),
-        }}
-      />
-    </Tabs>
+    <View style={styles.container}>
+      {showSidebar && <Sidebar />}
+      <View style={[
+        styles.content,
+        showSidebar && styles.contentWithSidebar,
+      ]}>
+        <Slot />
+      </View>
+      {!showSidebar && <MobileNav />}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: Colors.background,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  contentWithSidebar: {
+    marginLeft: 220,
+  },
+});

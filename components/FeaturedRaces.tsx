@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Race } from '@/data/types';
-import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '@/constants/theme';
+import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, Shadows } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 // Card width: 72% on mobile, max 320px on larger screens
@@ -23,13 +23,13 @@ interface FeaturedRacesProps {
   onRacePress?: (race: Race) => void;
 }
 
-// Mint Fresh gradient colors for featured cards
+// Uniform gradient colors for featured cards
 const categoryColors: Record<string, [string, string]> = {
-  '5k': ['#00C9A7', '#00A88C'],      // Mint green
-  '10k': ['#4299E1', '#3182CE'],     // Bright blue
-  'half': ['#ECC94B', '#D69E2E'],    // Golden yellow
-  'marathon': ['#FC8181', '#F56565'], // Soft coral
-  'ultra': ['#B794F4', '#9F7AEA'],   // Lavender purple
+  '5k': ['#00C9A7', '#00A88C'],
+  '10k': ['#00C9A7', '#00A88C'],
+  'half': ['#00C9A7', '#00A88C'],
+  'marathon': ['#00C9A7', '#00A88C'],
+  'ultra': ['#00C9A7', '#00A88C'],
 };
 
 export default function FeaturedRaces({ races, onRacePress }: FeaturedRacesProps) {
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSizes.xl,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     color: Colors.text,
   },
   subtitle: {
@@ -182,9 +182,9 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    borderRadius: BorderRadius.xl,
+    borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    ...Shadows.lg,
+    ...Shadows.md,
   },
   cardPressed: {
     opacity: 0.95,
@@ -209,20 +209,20 @@ const styles = StyleSheet.create({
   distanceText: {
     color: '#FFFFFF',
     fontSize: FontSizes.xs,
-    fontWeight: '700',
+    fontWeight: FontWeights.semibold,
     textTransform: 'uppercase',
   },
   featuredStar: {
     backgroundColor: 'rgba(255,255,255,0.25)',
     padding: 6,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.sm,
   },
   cardContent: {
     gap: Spacing.xs,
   },
   raceName: {
     fontSize: FontSizes.xl,
-    fontWeight: '800',
+    fontWeight: FontWeights.semibold,
     color: '#FFFFFF',
     marginBottom: Spacing.xs,
   },
@@ -252,6 +252,6 @@ const styles = StyleSheet.create({
   registerText: {
     color: '#1A1A2E',
     fontSize: FontSizes.sm,
-    fontWeight: '700',
+    fontWeight: FontWeights.medium,
   },
 });
