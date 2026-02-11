@@ -118,7 +118,12 @@ export default function DiscoverScreen() {
 
       {/* Featured races carousel */}
       {featuredRaces.length > 0 && filters.search === '' && filters.categories.length === 0 && (
-        <FeaturedRaces races={featuredRaces} onRacePress={handleRacePress} />
+        <FeaturedRaces
+          races={featuredRaces}
+          onRacePress={handleRacePress}
+          onSaveRace={toggleSaveRace}
+          isRaceSaved={isRaceSaved}
+        />
       )}
 
       {/* Section header */}
