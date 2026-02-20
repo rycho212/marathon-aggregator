@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Race } from '@/data/types';
 import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, Shadows } from '@/constants/theme';
+import { getRaceImageUrl } from '@/utils/raceImages';
 
 interface RaceCardProps {
   race: Race;
@@ -25,15 +26,6 @@ const categoryColors: Record<string, string> = {
   'half': Colors.distanceHalf,
   'marathon': Colors.distanceMarathon,
   'ultra': Colors.distanceUltra,
-};
-
-// Fallback images for different terrains/categories
-const fallbackImages: Record<string, string> = {
-  trail: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=300&fit=crop',
-  road: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
-  marathon: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&h=300&fit=crop',
-  ultra: 'https://images.unsplash.com/photo-1682686580391-615b1f28e5ee?w=400&h=300&fit=crop',
-  default: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=400&h=300&fit=crop',
 };
 
 export default function RaceCard({ race, onPress, onSave, isSaved = false }: RaceCardProps) {
@@ -65,15 +57,7 @@ export default function RaceCard({ race, onPress, onSave, isSaved = false }: Rac
     return parts.join(', ');
   };
 
-  const getImageUrl = () => {
-    if (race.imageUrl && !race.imageUrl.includes('voices')) {
-      return race.imageUrl + '?w=400&h=300&fit=crop';
-    }
-    if (race.terrain === 'trail') return fallbackImages.trail;
-    if (race.category === 'ultra') return fallbackImages.ultra;
-    if (race.category === 'marathon') return fallbackImages.marathon;
-    return fallbackImages.default;
-  };
+  const getImageUrl = () => getRaceImageUrl(race);
 
   return (
     <Pressable

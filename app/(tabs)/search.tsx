@@ -1,21 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Pressable,
   ActivityIndicator,
   TextInput,
+  Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { RaceCard, CategoryFilter } from '@/components';
+import { CategoryFilter } from '@/components';
 import { Race, RaceFilters } from '@/data/types';
 import { filterRaces, getMockRaces, fetchRacesFromRunSignUp } from '@/services/raceService';
 import { useSavedRaces } from '@/contexts/SavedRacesContext';
-import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, FontWeights, BorderRadius, Shadows } from '@/constants/theme';
+import { format } from 'date-fns';
+import { getRaceImageUrl } from '@/utils/raceImages';
+
+const { width: screenWidth } = Dimensions.get('window');
+// Match the compact card size from RaceGridSection (capped at 180px)
+const CARD_WIDTH = Math.min((screenWidth - Spacing.md * 3) / 2.3, 180);
 
 // US states for location filter
 const US_STATES = [
@@ -277,6 +285,72 @@ export default function SearchScreen() {
     </View>
   );
 
+  const renderCompactCard = (race: Race) => {
+    const raceDate = new Date(race.date);
+    const imageUrl = getRaceImageUrl(race);
+    const isSaved = isRaceSaved(race.id);
+
+    return (
+      <Pressable
+        key={race.id}
+        style={({ pressed }) => [styles.compactCard, pressed && styles.cardPressed]}
+        onPress={() => handleRacePress(race)}
+      >
+        <View style={styles.cardImageContainer}>
+          <Image
+            source={{ uri: imageUrl }}
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
+          <View style={styles.distanceBadge}>
+            <Text style={styles.distanceText}>{race.distanceLabel}</Text>
+          </View>
+          <Pressable
+            style={({ pressed }) => [
+              styles.saveButton,
+              pressed && styles.saveButtonPressed,
+            ]}
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleSaveRace(race);
+            }}
+          >
+            <Ionicons
+              name={isSaved ? 'heart' : 'heart-outline'}
+              size={16}
+              color={isSaved ? '#EF4444' : '#FFFFFF'}
+            />
+          </Pressable>
+        </View>
+        <View style={styles.cardContent}>
+          <Text style={styles.cardName} numberOfLines={2}>
+            {race.name}
+          </Text>
+          <Text style={styles.cardInfo} numberOfLines={1}>
+            {format(raceDate, 'MMM d')} • {race.city}
+          </Text>
+          {race.price && (
+            <Text style={styles.cardPrice}>${race.price}</Text>
+          )}
+        </View>
+      </Pressable>
+    );
+  };
+
+  const renderResultsGrid = () => {
+    const racesToShow = hasActiveFilters ? filteredRaces : [];
+
+    if (racesToShow.length === 0 && hasActiveFilters) {
+      return renderEmptyState();
+    }
+
+    return (
+      <View style={styles.resultsGrid}>
+        {racesToShow.map(race => renderCompactCard(race))}
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -289,22 +363,14 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <FlatList
-        data={hasActiveFilters ? filteredRaces : []}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <RaceCard
-            race={item}
-            onPress={handleRacePress}
-            onSave={toggleSaveRace}
-            isSaved={isRaceSaved(item.id)}
-          />
-        )}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={hasActiveFilters ? renderEmptyState : null}
-        contentContainerStyle={styles.listContent}
+      <ScrollView
         showsVerticalScrollIndicator={false}
-      />
+        contentContainerStyle={styles.listContent}
+      >
+        {renderHeader()}
+        {renderResultsGrid()}
+        <View style={{ height: Spacing.xxl }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -481,5 +547,82 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
     marginTop: Spacing.sm,
+  },
+  resultsGrid: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  compactCard: {
+    width: CARD_WIDTH,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    ...Shadows.sm,
+  },
+  cardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  cardImageContainer: {
+    width: '100%',
+    height: CARD_WIDTH * 0.75,
+    position: 'relative',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.backgroundAccent,
+  },
+  distanceBadge: {
+    position: 'absolute',
+    bottom: Spacing.xs,
+    left: Spacing.xs,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+  },
+  distanceText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  saveButton: {
+    position: 'absolute',
+    top: Spacing.xs,
+    right: Spacing.xs,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButtonPressed: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  cardContent: {
+    padding: Spacing.sm,
+  },
+  cardName: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+    color: Colors.text,
+    lineHeight: FontSizes.sm * 1.3,
+    marginBottom: 2,
+  },
+  cardInfo: {
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    marginBottom: 2,
+  },
+  cardPrice: {
+    fontSize: FontSizes.xs,
+    color: Colors.primary,
+    fontWeight: '600',
   },
 });

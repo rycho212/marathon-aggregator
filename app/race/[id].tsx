@@ -8,6 +8,7 @@ import {
   Linking,
   Share,
   Platform,
+  ImageBackground,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Race } from '@/data/types';
 import { getMockRaces } from '@/services/raceService';
+import { useSavedRaces } from '@/contexts/SavedRacesContext';
 import {
   Colors,
   Spacing,
@@ -22,20 +24,12 @@ import {
   BorderRadius,
   Shadows,
 } from '@/constants/theme';
-
-// Mint Fresh gradient colors
-const categoryColors: Record<string, [string, string]> = {
-  '5k': ['#00C9A7', '#00A88C'],      // Mint green
-  '10k': ['#4299E1', '#3182CE'],     // Bright blue
-  half: ['#ECC94B', '#D69E2E'],      // Golden yellow
-  marathon: ['#FC8181', '#F56565'],  // Soft coral
-  ultra: ['#B794F4', '#9F7AEA'],     // Lavender purple
-};
+import { getRaceDetailImageUrl } from '@/utils/raceImages';
 
 export default function RaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [race, setRace] = useState<Race | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
+  const { isRaceSaved, toggleSaveRace } = useSavedRaces();
 
   useEffect(() => {
     // Find the race by ID
@@ -43,6 +37,8 @@ export default function RaceDetailScreen() {
     const foundRace = races.find((r) => r.id === id);
     setRace(foundRace || null);
   }, [id]);
+
+  const isSaved = race ? isRaceSaved(race.id) : false;
 
   if (!race) {
     return (
@@ -52,8 +48,8 @@ export default function RaceDetailScreen() {
     );
   }
 
-  const gradientColors = categoryColors[race.category] || ['#FF6B35', '#E85A2C'];
   const raceDate = new Date(race.date);
+  const imageUrl = getRaceDetailImageUrl(race);
 
   const handleRegister = async () => {
     if (race.registrationUrl) {
@@ -73,7 +69,7 @@ export default function RaceDetailScreen() {
   };
 
   const handleSave = () => {
-    setIsSaved(!isSaved);
+    toggleSaveRace(race);
   };
 
   return (
@@ -100,46 +96,50 @@ export default function RaceDetailScreen() {
       />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Hero section */}
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
+        {/* Hero section with race photo */}
+        <ImageBackground
+          source={{ uri: imageUrl }}
+          style={styles.heroImage}
         >
-          <View style={styles.heroContent}>
-            <View style={styles.badgeRow}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{race.distanceLabel}</Text>
-              </View>
-              {race.terrain && (
+          <LinearGradient
+            colors={['rgba(0,0,0,0.2)', 'rgba(0,201,167,0.7)', 'rgba(0,168,140,0.9)']}
+            locations={[0, 0.6, 1]}
+            style={styles.hero}
+          >
+            <View style={styles.heroContent}>
+              <View style={styles.badgeRow}>
                 <View style={styles.badge}>
-                  <Ionicons
-                    name={race.terrain === 'trail' ? 'trail-sign' : 'speedometer'}
-                    size={14}
-                    color="#FFFFFF"
-                  />
-                  <Text style={styles.badgeText}>
-                    {race.terrain.charAt(0).toUpperCase() + race.terrain.slice(1)}
-                  </Text>
+                  <Text style={styles.badgeText}>{race.distanceLabel}</Text>
                 </View>
-              )}
+                {race.terrain && (
+                  <View style={styles.terrainBadge}>
+                    <Ionicons
+                      name={race.terrain === 'trail' ? 'leaf' : 'speedometer-outline'}
+                      size={14}
+                      color="#FFFFFF"
+                    />
+                    <Text style={styles.badgeText}>
+                      {race.terrain.charAt(0).toUpperCase() + race.terrain.slice(1)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.heroTitle}>{race.name}</Text>
+              <View style={styles.heroInfo}>
+                <Ionicons name="calendar" size={18} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.heroInfoText}>
+                  {format(raceDate, 'EEEE, MMMM d, yyyy')}
+                </Text>
+              </View>
+              <View style={styles.heroInfo}>
+                <Ionicons name="location" size={18} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.heroInfoText}>
+                  {race.city}, {race.state || race.country}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.heroTitle}>{race.name}</Text>
-            <View style={styles.heroInfo}>
-              <Ionicons name="calendar" size={18} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.heroInfoText}>
-                {format(raceDate, 'EEEE, MMMM d, yyyy')}
-              </Text>
-            </View>
-            <View style={styles.heroInfo}>
-              <Ionicons name="location" size={18} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.heroInfoText}>
-                {race.city}, {race.state || race.country}
-              </Text>
-            </View>
-          </View>
-        </LinearGradient>
+          </LinearGradient>
+        </ImageBackground>
 
         {/* Quick stats */}
         <View style={styles.statsRow}>
@@ -236,12 +236,13 @@ export default function RaceDetailScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.registerButton,
-            { backgroundColor: gradientColors[0] },
             pressed && styles.registerButtonPressed,
           ]}
           onPress={handleRegister}
         >
-          <Text style={styles.registerText}>Register Now</Text>
+          <Text style={styles.registerText}>
+            {race.price ? `$${race.price} - Register Now` : 'Register Now'}
+          </Text>
           <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
         </Pressable>
       </View>
@@ -276,10 +277,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  heroImage: {
+    width: '100%',
+    minHeight: 300,
+  },
   hero: {
+    flex: 1,
     paddingTop: Platform.OS === 'ios' ? 100 : 80,
     paddingBottom: Spacing.xl,
     paddingHorizontal: Spacing.md,
+    justifyContent: 'flex-end',
+    minHeight: 300,
   },
   heroContent: {
     gap: Spacing.sm,
@@ -290,6 +298,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    gap: 4,
+  },
+  terrainBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.25)',
@@ -419,6 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Colors.primary,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,

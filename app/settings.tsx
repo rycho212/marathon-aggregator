@@ -6,12 +6,15 @@ import {
   ScrollView,
   Pressable,
   Switch,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Spacing, FontSizes, FontWeights, BorderRadius, Shadows } from '@/constants/theme';
+import { fetchAllRaces, clearRaceCache, getRaceStats } from '@/services/raceService';
 
 const SETTINGS_STORAGE_KEY = '@getabib_settings';
 
@@ -48,10 +51,73 @@ const defaultSettings: AppSettings = {
 export default function SettingsScreen() {
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [dbStats, setDbStats] = useState<{
+    totalRaces: number;
+    byCategory: Record<string, number>;
+    cacheAge: number | null;
+  } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState('');
 
   useEffect(() => {
     loadSettings();
+    loadDbStats();
   }, []);
+
+  const loadDbStats = async () => {
+    const stats = await getRaceStats();
+    setDbStats(stats);
+  };
+
+  const handleFullSync = async () => {
+    Alert.alert(
+      'Sync Race Database',
+      'This will fetch races from all 50 states. It may take a few minutes. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sync Now',
+          onPress: async () => {
+            setSyncing(true);
+            try {
+              await fetchAllRaces({
+                useCache: false,
+                onProgress: (message) => {
+                  setSyncProgress(message);
+                },
+              });
+              await loadDbStats();
+              Alert.alert('Success', 'Race database updated successfully!');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to sync races. Please try again.');
+            } finally {
+              setSyncing(false);
+              setSyncProgress('');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearCache = async () => {
+    Alert.alert(
+      'Clear Cache',
+      'This will clear all cached race data. You will need to sync again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            await clearRaceCache();
+            await loadDbStats();
+            Alert.alert('Done', 'Cache cleared successfully.');
+          },
+        },
+      ]
+    );
+  };
 
   const loadSettings = async () => {
     try {
@@ -216,6 +282,88 @@ export default function SettingsScreen() {
               value={settings.preferences.showPrices}
               onToggle={() => togglePreference('showPrices', !settings.preferences.showPrices)}
             />
+          </View>
+        </View>
+
+        {/* Database Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="server-outline" size={22} color={Colors.primary} />
+            <Text style={styles.sectionTitle}>Race Database</Text>
+          </View>
+
+          <View style={styles.card}>
+            {/* Stats */}
+            <View style={styles.dbStatsContainer}>
+              <View style={styles.dbStat}>
+                <Text style={styles.dbStatNumber}>{dbStats?.totalRaces || 0}</Text>
+                <Text style={styles.dbStatLabel}>Total Races</Text>
+              </View>
+              <View style={styles.dbStatDivider} />
+              <View style={styles.dbStat}>
+                <Text style={styles.dbStatNumber}>
+                  {dbStats?.byCategory ? Object.keys(dbStats.byCategory).length : 0}
+                </Text>
+                <Text style={styles.dbStatLabel}>Categories</Text>
+              </View>
+              <View style={styles.dbStatDivider} />
+              <View style={styles.dbStat}>
+                <Text style={styles.dbStatNumber}>
+                  {dbStats?.cacheAge
+                    ? `${Math.round(dbStats.cacheAge / (1000 * 60 * 60))}h`
+                    : 'N/A'}
+                </Text>
+                <Text style={styles.dbStatLabel}>Cache Age</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* Sync Button */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.syncButton,
+                pressed && styles.syncButtonPressed,
+                syncing && styles.syncButtonDisabled,
+              ]}
+              onPress={handleFullSync}
+              disabled={syncing}
+            >
+              {syncing ? (
+                <>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.syncButtonText}>
+                    {syncProgress || 'Syncing...'}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="cloud-download-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.syncButtonText}>Sync All Races</Text>
+                </>
+              )}
+            </Pressable>
+
+            <Text style={styles.syncDescription}>
+              Fetch races from RunSignUp and UltraSignup across all 50 states.
+              This may take a few minutes.
+            </Text>
+
+            <View style={styles.divider} />
+
+            {/* Clear Cache */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.menuItem,
+                pressed && styles.menuItemPressed,
+              ]}
+              onPress={handleClearCache}
+            >
+              <Ionicons name="trash-outline" size={22} color={Colors.error} />
+              <Text style={[styles.menuItemText, { color: Colors.error }]}>
+                Clear Cache
+              </Text>
+            </Pressable>
           </View>
         </View>
 
@@ -457,5 +605,56 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
     color: Colors.textMuted,
     marginTop: Spacing.xs,
+  },
+  dbStatsContainer: {
+    flexDirection: 'row',
+    padding: Spacing.md,
+  },
+  dbStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dbStatNumber: {
+    fontSize: FontSizes.xl,
+    fontWeight: FontWeights.bold,
+    color: Colors.primary,
+  },
+  dbStatLabel: {
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  dbStatDivider: {
+    width: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.xs,
+  },
+  syncButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    margin: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  syncButtonPressed: {
+    opacity: 0.8,
+  },
+  syncButtonDisabled: {
+    backgroundColor: Colors.textMuted,
+  },
+  syncButtonText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+  },
+  syncDescription: {
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
   },
 });

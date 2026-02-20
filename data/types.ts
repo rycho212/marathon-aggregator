@@ -20,6 +20,7 @@ export interface Race {
   elevation?: number; // gain in meters
   isFeatured?: boolean;
   organizerName?: string;
+  source?: 'runsignup' | 'ultrasignup' | 'active' | 'manual'; // Data source
 
   // NEW: Enhanced race characteristics for recommendations
   characteristics?: RaceCharacteristics;

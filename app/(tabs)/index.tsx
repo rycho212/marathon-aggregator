@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
@@ -11,15 +11,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  RaceCard,
   SearchBar,
   CategoryFilter,
   FeaturedRaces,
+  RaceGridSection,
 } from '@/components';
 import { Race, RaceFilters } from '@/data/types';
 import {
-  fetchRacesFromRunSignUp,
   filterRaces,
+  fetchAllRaces,
+  fetchQuickRaces,
   getMockRaces,
 } from '@/services/raceService';
 import { useSavedRaces } from '@/contexts/SavedRacesContext';
@@ -40,21 +41,39 @@ export default function DiscoverScreen() {
     terrain: [],
   });
 
-  const loadRaces = useCallback(async () => {
+  const [loadingMessage, setLoadingMessage] = useState('');
+
+  const loadRaces = useCallback(async (fullSync = false) => {
     try {
-      // Try to fetch from API, fall back to mock data
-      const data = await fetchRacesFromRunSignUp({ limit: 50 });
-      if (data.length > 0) {
-        setRaces(data);
+      if (fullSync) {
+        // Full sync from all sources
+        const data = await fetchAllRaces({
+          useCache: false,
+          onProgress: (message) => {
+            setLoadingMessage(message);
+          },
+        });
+        setRaces(data.length > 0 ? data : getMockRaces());
       } else {
-        // Use mock data as fallback
-        setRaces(getMockRaces());
+        // Try cached data first
+        const cachedData = await fetchAllRaces({ useCache: true });
+        if (cachedData.length > 0) {
+          setRaces(cachedData);
+        } else {
+          // No cache - do a quick fetch from popular states
+          setLoadingMessage('Loading races from RunSignUp...');
+          const quickData = await fetchQuickRaces();
+          // Use API data if available, otherwise fallback to curated races
+          setRaces(quickData.length > 0 ? quickData : getMockRaces());
+        }
       }
     } catch (error) {
       console.error('Failed to load races:', error);
+      // Use fallback data on error
       setRaces(getMockRaces());
     } finally {
       setLoading(false);
+      setLoadingMessage('');
     }
   }, []);
 
@@ -76,26 +95,40 @@ export default function DiscoverScreen() {
   const featuredRaces = races.filter((race) => race.isFeatured);
   const upcomingRaces = filteredRaces.filter((race) => !race.isFeatured);
 
+  // Organize races by categories for Spotify-like sections
+  const categorizedRaces = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      comingSoon: upcomingRaces
+        .filter(r => new Date(r.date) <= thirtyDaysFromNow)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+      marathons: upcomingRaces.filter(r => r.category === 'marathon'),
+      halfMarathons: upcomingRaces.filter(r => r.category === 'half'),
+      trailRaces: upcomingRaces.filter(r => r.terrain === 'trail'),
+      ultraRaces: upcomingRaces.filter(r => r.category === 'ultra'),
+      fiveKs: upcomingRaces.filter(r => r.category === '5k'),
+      tenKs: upcomingRaces.filter(r => r.category === '10k'),
+      roadRaces: upcomingRaces.filter(r => r.terrain === 'road'),
+    };
+  }, [upcomingRaces]);
+
+  const isFiltering = filters.search !== '' || filters.categories.length > 0;
+
+  // Hero text - using the "bold" style
+  const renderHeroText = () => (
+    <View style={styles.heroTextContainer}>
+      <Text style={styles.heroBoldTitle}>DISCOVER</Text>
+      <Text style={styles.heroBoldSubtitle}>Your next finish line</Text>
+    </View>
+  );
+
   const renderHeader = () => (
     <View>
       {/* Hero header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Find Your Next</Text>
-          <Text style={styles.heroTitle}>Adventure</Text>
-        </View>
-        <View style={styles.statsContainer}>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>{races.length}</Text>
-            <Text style={styles.statLabel}>Races</Text>
-          </View>
-          {savedRaces.length > 0 && (
-            <View style={[styles.stat, { marginTop: Spacing.xs }]}>
-              <Text style={styles.statNumber}>{savedRaces.length}</Text>
-              <Text style={styles.statLabel}>Saved</Text>
-            </View>
-          )}
-        </View>
+        {renderHeroText()}
       </View>
 
       {/* Search bar */}
@@ -117,7 +150,7 @@ export default function DiscoverScreen() {
       />
 
       {/* Featured races carousel */}
-      {featuredRaces.length > 0 && filters.search === '' && filters.categories.length === 0 && (
+      {featuredRaces.length > 0 && !isFiltering && (
         <FeaturedRaces
           races={featuredRaces}
           onRacePress={handleRacePress}
@@ -125,21 +158,98 @@ export default function DiscoverScreen() {
           isRaceSaved={isRaceSaved}
         />
       )}
+    </View>
+  );
 
-      {/* Section header */}
+  const renderCategorizedSections = () => (
+    <View>
+      {/* Coming Soon - races in the next 30 days */}
+      <RaceGridSection
+        title="Coming Up Soon"
+        icon="time-outline"
+        races={categorizedRaces.comingSoon}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+
+      {/* Trail Adventures */}
+      <RaceGridSection
+        title="Trail Adventures"
+        icon="leaf-outline"
+        races={categorizedRaces.trailRaces}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+
+      {/* Marathons */}
+      <RaceGridSection
+        title="Marathons"
+        icon="trophy-outline"
+        races={categorizedRaces.marathons}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+
+      {/* Half Marathons */}
+      <RaceGridSection
+        title="Half Marathons"
+        icon="medal-outline"
+        races={categorizedRaces.halfMarathons}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+
+      {/* Ultra Races */}
+      <RaceGridSection
+        title="Ultra Challenges"
+        icon="flame-outline"
+        races={categorizedRaces.ultraRaces}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+
+      {/* 5Ks & 10Ks */}
+      <RaceGridSection
+        title="5K Races"
+        icon="walk-outline"
+        races={categorizedRaces.fiveKs}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+
+      <RaceGridSection
+        title="10K Races"
+        icon="fitness-outline"
+        races={categorizedRaces.tenKs}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
+    </View>
+  );
+
+  const renderFilteredResults = () => (
+    <View style={styles.filteredSection}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionLeft}>
-          <Ionicons name="calendar-outline" size={20} color={Colors.secondary} />
-          <Text style={styles.sectionTitle}>
-            {filters.search || filters.categories.length > 0
-              ? 'Search Results'
-              : 'Upcoming Races'}
-          </Text>
+          <Ionicons name="search-outline" size={20} color={Colors.secondary} />
+          <Text style={styles.sectionTitle}>Search Results</Text>
         </View>
-        <Text style={styles.sectionCount}>
-          {upcomingRaces.length} found
-        </Text>
+        <Text style={styles.sectionCount}>{upcomingRaces.length} found</Text>
       </View>
+      <RaceGridSection
+        title=""
+        races={upcomingRaces}
+        onRacePress={handleRacePress}
+        onSaveRace={toggleSaveRace}
+        isRaceSaved={isRaceSaved}
+      />
     </View>
   );
 
@@ -158,7 +268,9 @@ export default function DiscoverScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Finding races...</Text>
+          <Text style={styles.loadingText}>
+            {loadingMessage || 'Finding races...'}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -166,19 +278,8 @@ export default function DiscoverScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <FlatList
-        data={upcomingRaces}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <RaceCard
-            race={item}
-            onPress={handleRacePress}
-            onSave={toggleSaveRace}
-            isSaved={isRaceSaved(item.id)}
-          />
-        )}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmptyState}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -188,8 +289,17 @@ export default function DiscoverScreen() {
           />
         }
         contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      >
+        {renderHeader()}
+
+        {isFiltering ? (
+          upcomingRaces.length > 0 ? renderFilteredResults() : renderEmptyState()
+        ) : (
+          renderCategorizedSections()
+        )}
+
+        <View style={{ height: Spacing.xxl }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -210,44 +320,68 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
   },
-  greeting: {
+  heroTextContainer: {
+    marginBottom: Spacing.sm,
+  },
+  // Gradient style (default)
+  heroSubtitle: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
     marginBottom: 4,
   },
-  heroTitle: {
-    fontSize: FontSizes.hero,
-    fontWeight: FontWeights.bold,
+  heroTitleGradient: {
+    fontSize: 32,
+    fontWeight: '800',
     color: Colors.text,
     letterSpacing: -0.5,
   },
-  statsContainer: {
-    alignItems: 'flex-end',
-  },
-  stat: {
-    alignItems: 'center',
-    backgroundColor: Colors.backgroundCard,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  statNumber: {
-    fontSize: FontSizes.xl,
-    fontWeight: FontWeights.semibold,
+  heroAccent: {
     color: Colors.primary,
   },
-  statLabel: {
-    fontSize: FontSizes.xs,
+  // Bold style
+  heroBoldTitle: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: Colors.text,
+    letterSpacing: 4,
+  },
+  heroBoldSubtitle: {
+    fontSize: FontSizes.lg,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  // Minimal style
+  heroMinimalTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: Colors.primary,
+    letterSpacing: 2,
+    textTransform: 'lowercase',
+  },
+  heroMinimalSubtitle: {
+    fontSize: FontSizes.md,
     color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  // Playful style
+  heroPlayfulEmoji: {
+    fontSize: 36,
+    marginBottom: 4,
+  },
+  heroPlayfulTitle: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+  heroPlayfulSubtitle: {
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -288,6 +422,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
     textAlign: 'center',
+    marginTop: Spacing.sm,
+  },
+  filteredSection: {
     marginTop: Spacing.sm,
   },
 });

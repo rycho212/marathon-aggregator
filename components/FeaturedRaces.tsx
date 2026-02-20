@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Race } from '@/data/types';
 import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, Shadows } from '@/constants/theme';
+import { getRaceImageUrl } from '@/utils/raceImages';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(screenWidth * 0.78, 340);
@@ -27,40 +28,13 @@ interface FeaturedRacesProps {
   isRaceSaved?: (raceId: string) => boolean;
 }
 
-// Curated images for famous races (would come from API in production)
-const raceImages: Record<string, string> = {
-  'Boston Marathon': 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&h=400&fit=crop',
-  'Big Sur International Marathon': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
-  'Western States 100': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&h=400&fit=crop',
-  'Chicago Marathon': 'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&h=400&fit=crop',
-  'NYC Marathon': 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&h=400&fit=crop',
-  'UTMB Mont-Blanc': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&h=400&fit=crop',
-};
-
-// Fallback images by category/terrain
-const fallbackImages: Record<string, string> = {
-  trail: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&h=400&fit=crop',
-  ultra: 'https://images.unsplash.com/photo-1682686580391-615b1f28e5ee?w=600&h=400&fit=crop',
-  marathon: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&h=400&fit=crop',
-  half: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=600&h=400&fit=crop',
-  default: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&h=400&fit=crop',
-};
-
-function getRaceImage(race: Race): string {
-  // Check for specific race image
-  if (raceImages[race.name]) {
-    return raceImages[race.name];
-  }
-  // Use race's own image if available
-  if (race.imageUrl && !race.imageUrl.includes('undefined')) {
-    return race.imageUrl + '?w=600&h=400&fit=crop';
-  }
-  // Fallback based on terrain/category
-  if (race.terrain === 'trail') return fallbackImages.trail;
-  if (race.category === 'ultra') return fallbackImages.ultra;
-  if (race.category === 'marathon') return fallbackImages.marathon;
-  if (race.category === 'half') return fallbackImages.half;
-  return fallbackImages.default;
+/**
+ * Get higher resolution image for featured cards
+ */
+function getFeaturedImageUrl(race: Race): string {
+  const url = getRaceImageUrl(race);
+  // Replace dimensions for higher resolution featured cards
+  return url.replace('w=400&h=400', 'w=600&h=400');
 }
 
 export default function FeaturedRaces({
@@ -115,7 +89,7 @@ function FeaturedCard({
   isSaved: boolean;
 }) {
   const raceDate = new Date(race.date);
-  const imageUrl = getRaceImage(race);
+  const imageUrl = getFeaturedImageUrl(race);
 
   const handleRegister = async () => {
     if (race.registrationUrl) {
