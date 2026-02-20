@@ -5,6 +5,8 @@ import { View, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SavedRacesProvider } from '@/contexts/SavedRacesContext';
+import { LocationProvider } from '@/contexts/LocationContext';
+import { GoalsProvider } from '@/contexts/GoalsContext';
 import { Colors } from '@/constants/theme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -18,9 +20,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SavedRacesProvider>
-        <View style={styles.container}>
-          <StatusBar style="dark" />
-          <Stack
+        <LocationProvider>
+          <GoalsProvider>
+            <View style={styles.container}>
+              <StatusBar style="dark" />
+              <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: Colors.background },
@@ -52,8 +56,10 @@ export default function RootLayout() {
                 presentation: 'card',
               }}
             />
-          </Stack>
-        </View>
+              </Stack>
+            </View>
+          </GoalsProvider>
+        </LocationProvider>
       </SavedRacesProvider>
     </SafeAreaProvider>
   );

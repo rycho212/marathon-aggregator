@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Linking,
   Image,
   ImageBackground,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,7 +45,23 @@ export default function FeaturedRaces({
   onSaveRace,
   isRaceSaved
 }: FeaturedRacesProps) {
+  const scrollRef = useRef<ScrollView>(null);
+  const [scrollX, setScrollX] = useState(0);
+  const STEP = CARD_WIDTH + Spacing.md;
+  const maxScroll = (races.length - 1) * STEP;
+
   if (races.length === 0) return null;
+
+  const scrollTo = (direction: 'left' | 'right') => {
+    const next = direction === 'right'
+      ? Math.min(scrollX + STEP, maxScroll)
+      : Math.max(scrollX - STEP, 0);
+    scrollRef.current?.scrollTo({ x: next, animated: true });
+    setScrollX(next);
+  };
+
+  const showLeft = scrollX > 10;
+  const showRight = scrollX < maxScroll - 10;
 
   return (
     <View style={styles.container}>
@@ -55,24 +73,69 @@ export default function FeaturedRaces({
         <Text style={styles.subtitle}>{races.length} races</Text>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={CARD_WIDTH + Spacing.md}
-        snapToAlignment="start"
-        contentContainerStyle={styles.scrollContent}
-      >
-        {races.map((race) => (
-          <FeaturedCard
-            key={race.id}
-            race={race}
-            onPress={onRacePress}
-            onSave={onSaveRace}
-            isSaved={isRaceSaved?.(race.id) ?? false}
-          />
-        ))}
-      </ScrollView>
+      <View style={styles.scrollWrapper}>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={STEP}
+          snapToAlignment="start"
+          contentContainerStyle={styles.scrollContent}
+          onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) =>
+            setScrollX(e.nativeEvent.contentOffset.x)
+          }
+          scrollEventThrottle={16}
+        >
+          {races.map((race) => (
+            <FeaturedCard
+              key={race.id}
+              race={race}
+              onPress={onRacePress}
+              onSave={onSaveRace}
+              isSaved={isRaceSaved?.(race.id) ?? false}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Left arrow */}
+        {showLeft && (
+          <Pressable
+            style={[styles.arrowButton, styles.arrowLeft]}
+            onPress={() => scrollTo('left')}
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0.0)']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.arrowGradient}
+            >
+              <View style={styles.arrowCircle}>
+                <Ionicons name="chevron-back" size={20} color="#fff" />
+              </View>
+            </LinearGradient>
+          </Pressable>
+        )}
+
+        {/* Right arrow */}
+        {showRight && (
+          <Pressable
+            style={[styles.arrowButton, styles.arrowRight]}
+            onPress={() => scrollTo('right')}
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.55)']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.arrowGradient}
+            >
+              <View style={styles.arrowCircle}>
+                <Ionicons name="chevron-forward" size={20} color="#fff" />
+              </View>
+            </LinearGradient>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -203,6 +266,38 @@ function FeaturedCard({
 const styles = StyleSheet.create({
   container: {
     marginBottom: Spacing.lg,
+  },
+  scrollWrapper: {
+    position: 'relative',
+  },
+  arrowButton: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 64,
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  arrowLeft: {
+    left: 0,
+  },
+  arrowRight: {
+    right: 0,
+  },
+  arrowGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrowCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',

@@ -5,3 +5,5 @@ export { default as FeaturedRaces } from './FeaturedRaces';
 export { default as RaceGridSection } from './RaceGridSection';
 export { default as PersonalityQuiz } from './PersonalityQuiz';
 export { default as PersonalityProfile } from './PersonalityProfile';
+export { default as LocationChip } from './LocationChip';
+export { default as LocationModal } from './LocationModal';

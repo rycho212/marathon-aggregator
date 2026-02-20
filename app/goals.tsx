@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,96 +6,60 @@ import {
   ScrollView,
   Pressable,
   TextInput,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useGoals } from '@/contexts/GoalsContext';
+import { GoalTag, analyzeGoals } from '@/services/goalEngine';
 import { Colors, Spacing, FontSizes, FontWeights, BorderRadius, Shadows } from '@/constants/theme';
-
-const GOALS_STORAGE_KEY = '@getabib_goals';
-
-interface RaceGoal {
-  id: string;
-  raceName: string;
-  targetDate: string;
-  targetTime?: string;
-  distance: string;
-  notes?: string;
-  isCompleted: boolean;
-  createdAt: string;
-}
-
-const distanceOptions = ['5K', '10K', 'Half Marathon', 'Marathon', '50K', '100K', '100 Miles'];
 
 export default function GoalsScreen() {
   const router = useRouter();
-  const [goals, setGoals] = useState<RaceGoal[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newGoal, setNewGoal] = useState({
-    raceName: '',
-    targetDate: '',
-    targetTime: '',
-    distance: 'Marathon',
-    notes: '',
-  });
+  const {
+    rawText,
+    parsedGoals,
+    confirmedTags,
+    hasGoals,
+    updateGoalText,
+    confirmTag,
+    dismissTag,
+    clearGoals,
+  } = useGoals();
 
+  const [text, setText] = useState(rawText);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showResults, setShowResults] = useState(hasGoals);
+
+  // Sync initial state
   useEffect(() => {
-    loadGoals();
-  }, []);
+    setText(rawText);
+    if (rawText) setShowResults(true);
+  }, [rawText]);
 
-  const loadGoals = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
-      if (stored) {
-        setGoals(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Error loading goals:', error);
-    }
+  const handleAnalyze = useCallback(() => {
+    if (!text.trim()) return;
+
+    setIsAnalyzing(true);
+    // Small delay to make it feel like "AI is thinking"
+    setTimeout(() => {
+      updateGoalText(text);
+      setIsAnalyzing(false);
+      setShowResults(true);
+    }, 800);
+  }, [text, updateGoalText]);
+
+  const handleClear = () => {
+    setText('');
+    setShowResults(false);
+    clearGoals();
   };
 
-  const saveGoals = async (updatedGoals: RaceGoal[]) => {
-    try {
-      await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(updatedGoals));
-      setGoals(updatedGoals);
-    } catch (error) {
-      console.error('Error saving goals:', error);
-    }
-  };
-
-  const addGoal = () => {
-    if (!newGoal.raceName.trim()) return;
-
-    const goal: RaceGoal = {
-      id: Date.now().toString(),
-      raceName: newGoal.raceName.trim(),
-      targetDate: newGoal.targetDate || 'TBD',
-      targetTime: newGoal.targetTime || undefined,
-      distance: newGoal.distance,
-      notes: newGoal.notes || undefined,
-      isCompleted: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    saveGoals([...goals, goal]);
-    setNewGoal({ raceName: '', targetDate: '', targetTime: '', distance: 'Marathon', notes: '' });
-    setShowAddForm(false);
-  };
-
-  const toggleGoalComplete = (goalId: string) => {
-    const updatedGoals = goals.map(g =>
-      g.id === goalId ? { ...g, isCompleted: !g.isCompleted } : g
-    );
-    saveGoals(updatedGoals);
-  };
-
-  const deleteGoal = (goalId: string) => {
-    saveGoals(goals.filter(g => g.id !== goalId));
-  };
-
-  const activeGoals = goals.filter(g => !g.isCompleted);
-  const completedGoals = goals.filter(g => g.isCompleted);
+  // Get tags that are detected but not yet confirmed or dismissed
+  const suggestedTags = parsedGoals.tags.filter(
+    (t) => !confirmedTags.find((ct) => ct.id === t.id)
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -105,202 +69,197 @@ export default function GoalsScreen() {
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Race Goals</Text>
-        <Pressable
-          onPress={() => setShowAddForm(!showAddForm)}
-          style={styles.addButton}
-        >
-          <Ionicons name={showAddForm ? 'close' : 'add'} size={24} color={Colors.primary} />
-        </Pressable>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Add Goal Form */}
-        {showAddForm && (
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Add New Goal</Text>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Hero section */}
+        <View style={styles.heroSection}>
+          <View style={styles.heroIcon}>
+            <Ionicons name="sparkles" size={32} color={Colors.primary} />
+          </View>
+          <Text style={styles.heroTitle}>Tell us about your goals</Text>
+          <Text style={styles.heroSubtitle}>
+            Describe what you want to achieve — we'll personalize your race recommendations
+          </Text>
+        </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Race Name</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newGoal.raceName}
-                onChangeText={(text) => setNewGoal({ ...newGoal, raceName: text })}
-                placeholder="e.g., Boston Marathon 2026"
-                placeholderTextColor={Colors.textMuted}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Distance</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.distanceScroll}>
-                <View style={styles.distanceOptions}>
-                  {distanceOptions.map((dist) => (
-                    <Pressable
-                      key={dist}
-                      style={[
-                        styles.distanceChip,
-                        newGoal.distance === dist && styles.distanceChipSelected,
-                      ]}
-                      onPress={() => setNewGoal({ ...newGoal, distance: dist })}
-                    >
-                      <Text
-                        style={[
-                          styles.distanceChipText,
-                          newGoal.distance === dist && styles.distanceChipTextSelected,
-                        ]}
-                      >
-                        {dist}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-
-            <View style={styles.inputRow}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>Target Date</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={newGoal.targetDate}
-                  onChangeText={(text) => setNewGoal({ ...newGoal, targetDate: text })}
-                  placeholder="Apr 2026"
-                  placeholderTextColor={Colors.textMuted}
-                />
-              </View>
-              <View style={[styles.inputGroup, { flex: 1, marginLeft: Spacing.sm }]}>
-                <Text style={styles.inputLabel}>Target Time (optional)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={newGoal.targetTime}
-                  onChangeText={(text) => setNewGoal({ ...newGoal, targetTime: text })}
-                  placeholder="3:30:00"
-                  placeholderTextColor={Colors.textMuted}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Notes (optional)</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={newGoal.notes}
-                onChangeText={(text) => setNewGoal({ ...newGoal, notes: text })}
-                placeholder="Training notes, motivation, etc."
-                placeholderTextColor={Colors.textMuted}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
+        {/* Free-form text input */}
+        <View style={styles.inputCard}>
+          <TextInput
+            style={styles.goalInput}
+            multiline
+            numberOfLines={6}
+            placeholder="e.g., I want to qualify for Boston. I've been running for 2 years and my current marathon PR is 3:45. I love trail races and hilly courses. My dream is to run Western States someday..."
+            placeholderTextColor={Colors.textMuted}
+            value={text}
+            onChangeText={setText}
+            textAlignVertical="top"
+          />
+          <View style={styles.inputActions}>
+            {text.trim().length > 0 && (
+              <Pressable onPress={handleClear} style={styles.clearTextButton}>
+                <Text style={styles.clearTextButtonText}>Clear</Text>
+              </Pressable>
+            )}
             <Pressable
-              style={({ pressed }) => [
-                styles.submitButton,
-                pressed && styles.submitButtonPressed,
+              style={[
+                styles.analyzeButton,
+                (!text.trim() || isAnalyzing) && styles.analyzeButtonDisabled,
               ]}
-              onPress={addGoal}
+              onPress={handleAnalyze}
+              disabled={!text.trim() || isAnalyzing}
             >
-              <Text style={styles.submitButtonText}>Add Goal</Text>
+              {isAnalyzing ? (
+                <Text style={styles.analyzeButtonText}>Analyzing...</Text>
+              ) : (
+                <>
+                  <Ionicons name="sparkles" size={16} color="#fff" />
+                  <Text style={styles.analyzeButtonText}>Analyze Goals</Text>
+                </>
+              )}
             </Pressable>
           </View>
-        )}
+        </View>
 
-        {/* Active Goals */}
-        {activeGoals.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Active Goals ({activeGoals.length})</Text>
-            {activeGoals.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                onToggle={toggleGoalComplete}
-                onDelete={deleteGoal}
-              />
-            ))}
+        {/* Results section */}
+        {showResults && (confirmedTags.length > 0 || suggestedTags.length > 0) && (
+          <View style={styles.resultsSection}>
+            {/* Confirmed goals */}
+            {confirmedTags.length > 0 && (
+              <View style={styles.tagSection}>
+                <View style={styles.tagSectionHeader}>
+                  <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
+                  <Text style={styles.tagSectionTitle}>Your Goals</Text>
+                </View>
+                <View style={styles.tagGrid}>
+                  {confirmedTags.map((tag) => (
+                    <ConfirmedTagChip
+                      key={tag.id}
+                      tag={tag}
+                      onDismiss={() => dismissTag(tag.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Suggested goals (not yet confirmed) */}
+            {suggestedTags.length > 0 && (
+              <View style={styles.tagSection}>
+                <View style={styles.tagSectionHeader}>
+                  <Ionicons name="bulb-outline" size={18} color={Colors.warning} />
+                  <Text style={styles.tagSectionTitle}>Suggested Goals</Text>
+                </View>
+                <Text style={styles.tagSectionSubtitle}>
+                  Tap to add these to your profile
+                </Text>
+                <View style={styles.tagGrid}>
+                  {suggestedTags.map((tag) => (
+                    <SuggestedTagChip
+                      key={tag.id}
+                      tag={tag}
+                      onConfirm={() => confirmTag(tag)}
+                      onDismiss={() => dismissTag(tag.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Summary */}
+            {parsedGoals.experienceLevel && (
+              <View style={styles.summaryCard}>
+                <Ionicons name="analytics" size={20} color={Colors.primary} />
+                <View style={styles.summaryContent}>
+                  <Text style={styles.summaryTitle}>Your Profile</Text>
+                  <Text style={styles.summaryText}>
+                    {parsedGoals.experienceLevel === 'beginner' && 'New to racing — we\'ll focus on beginner-friendly events'}
+                    {parsedGoals.experienceLevel === 'intermediate' && 'Experienced runner — we\'ll match you with competitive races'}
+                    {parsedGoals.experienceLevel === 'advanced' && 'Elite runner — we\'ll highlight challenging & prestigious events'}
+                    {parsedGoals.targetTime && ` · Target: ${parsedGoals.targetTime}`}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
-        {/* Completed Goals */}
-        {completedGoals.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Completed ({completedGoals.length})</Text>
-            {completedGoals.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                onToggle={toggleGoalComplete}
-                onDelete={deleteGoal}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Empty State */}
-        {goals.length === 0 && !showAddForm && (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="flag-outline" size={48} color={Colors.textMuted} />
-            </View>
-            <Text style={styles.emptyTitle}>No Race Goals Yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Set your sights on a race! Tap + above to add your first goal.
+        {/* Empty results */}
+        {showResults && confirmedTags.length === 0 && suggestedTags.length === 0 && !isAnalyzing && text.trim().length > 0 && (
+          <View style={styles.noResults}>
+            <Ionicons name="search-outline" size={32} color={Colors.textMuted} />
+            <Text style={styles.noResultsText}>
+              Try being more specific — mention race distances, terrain preferences, time goals, or race names
             </Text>
           </View>
         )}
 
-        <View style={{ height: Spacing.xxl }} />
+        {/* Tips */}
+        {!showResults && (
+          <View style={styles.tipsSection}>
+            <Text style={styles.tipsTitle}>What to mention:</Text>
+            {[
+              { icon: 'trophy', text: 'Race goals — "qualify for Boston", "first marathon"' },
+              { icon: 'timer', text: 'Time targets — "sub-3:30", "break 4 hours"' },
+              { icon: 'leaf', text: 'Terrain — "trail running", "hilly courses"' },
+              { icon: 'flame', text: 'Challenges — "ultra", "100 miler", "endurance"' },
+              { icon: 'image', text: 'Preferences — "scenic", "flat and fast", "coastal"' },
+            ].map((tip, i) => (
+              <View key={i} style={styles.tipRow}>
+                <Ionicons name={tip.icon as any} size={16} color={Colors.primary} />
+                <Text style={styles.tipText}>{tip.text}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={{ height: Spacing.xxl * 2 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function GoalCard({
-  goal,
-  onToggle,
-  onDelete,
-}: {
-  goal: RaceGoal;
-  onToggle: (id: string) => void;
-  onDelete: (id: string) => void;
-}) {
+function ConfirmedTagChip({ tag, onDismiss }: { tag: GoalTag; onDismiss: () => void }) {
   return (
-    <View style={[styles.goalCard, goal.isCompleted && styles.goalCardCompleted]}>
-      <Pressable
-        style={styles.checkbox}
-        onPress={() => onToggle(goal.id)}
-      >
-        <Ionicons
-          name={goal.isCompleted ? 'checkmark-circle' : 'ellipse-outline'}
-          size={28}
-          color={goal.isCompleted ? Colors.primary : Colors.textMuted}
-        />
-      </Pressable>
-
-      <View style={styles.goalContent}>
-        <Text style={[styles.goalName, goal.isCompleted && styles.goalNameCompleted]}>
-          {goal.raceName}
-        </Text>
-        <View style={styles.goalMeta}>
-          <View style={styles.goalTag}>
-            <Text style={styles.goalTagText}>{goal.distance}</Text>
-          </View>
-          <Text style={styles.goalDate}>{goal.targetDate}</Text>
-          {goal.targetTime && (
-            <Text style={styles.goalTime}>Goal: {goal.targetTime}</Text>
-          )}
-        </View>
-        {goal.notes && (
-          <Text style={styles.goalNotes} numberOfLines={2}>{goal.notes}</Text>
-        )}
+    <View style={[styles.confirmedChip, { borderColor: tag.color + '40' }]}>
+      <View style={[styles.chipIconBg, { backgroundColor: tag.color + '15' }]}>
+        <Ionicons name={tag.icon as any} size={14} color={tag.color} />
       </View>
-
-      <Pressable
-        style={styles.deleteButton}
-        onPress={() => onDelete(goal.id)}
-      >
-        <Ionicons name="trash-outline" size={20} color={Colors.textMuted} />
+      <Text style={styles.confirmedChipText}>{tag.label}</Text>
+      <Pressable onPress={onDismiss} hitSlop={8}>
+        <Ionicons name="close" size={14} color={Colors.textMuted} />
       </Pressable>
     </View>
+  );
+}
+
+function SuggestedTagChip({
+  tag,
+  onConfirm,
+  onDismiss,
+}: {
+  tag: GoalTag;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <Pressable
+      style={[styles.suggestedChip, { borderColor: tag.color + '30' }]}
+      onPress={onConfirm}
+    >
+      <View style={[styles.chipIconBg, { backgroundColor: tag.color + '10' }]}>
+        <Ionicons name={tag.icon as any} size={14} color={tag.color} />
+      </View>
+      <Text style={styles.suggestedChipText}>{tag.label}</Text>
+      <View style={styles.chipActions}>
+        <Ionicons name="add-circle" size={18} color={Colors.primary} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -329,187 +288,210 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.semibold,
     color: Colors.text,
   },
-  addButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   content: {
     flex: 1,
     padding: Spacing.md,
   },
-  formCard: {
+  heroSection: {
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  heroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  heroTitle: {
+    fontSize: FontSizes.xl,
+    fontWeight: FontWeights.bold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  heroSubtitle: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.lg,
+    lineHeight: 20,
+  },
+  inputCard: {
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    ...Shadows.sm,
+  },
+  goalInput: {
+    fontSize: FontSizes.md,
+    color: Colors.text,
+    minHeight: 140,
+    lineHeight: 22,
+    padding: Spacing.sm,
+    backgroundColor: Colors.backgroundAccent,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  inputActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  clearTextButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  clearTextButtonText: {
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+  },
+  analyzeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.lg,
+  },
+  analyzeButtonDisabled: {
+    backgroundColor: Colors.textMuted,
+  },
+  analyzeButtonText: {
+    color: '#fff',
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+  },
+  resultsSection: {
+    gap: Spacing.lg,
+  },
+  tagSection: {
+    gap: Spacing.sm,
+  },
+  tagSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  tagSectionTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
+    color: Colors.text,
+  },
+  tagSectionSubtitle: {
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    marginTop: -4,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  confirmedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.backgroundCard,
+    paddingLeft: 6,
+    paddingRight: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    ...Shadows.sm,
+  },
+  chipIconBg: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmedChipText: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
+    color: Colors.text,
+  },
+  suggestedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.backgroundAccent,
+    paddingLeft: 6,
+    paddingRight: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  suggestedChipText: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+  },
+  chipActions: {
+    marginLeft: 2,
+  },
+  summaryCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    backgroundColor: Colors.primaryLight,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+  },
+  summaryContent: {
+    flex: 1,
+  },
+  summaryTitle: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  summaryText: {
+    fontSize: FontSizes.xs,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  noResults: {
+    alignItems: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.md,
+  },
+  noResultsText: {
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  tipsSection: {
     backgroundColor: Colors.backgroundCard,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    marginBottom: Spacing.lg,
+    gap: Spacing.md,
     ...Shadows.sm,
   },
-  formTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.semibold,
-    color: Colors.text,
-    marginBottom: Spacing.md,
-  },
-  inputGroup: {
-    marginBottom: Spacing.md,
-  },
-  inputLabel: {
+  tipsTitle: {
     fontSize: FontSizes.sm,
-    fontWeight: FontWeights.medium,
+    fontWeight: FontWeights.semibold,
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
   },
-  textInput: {
-    backgroundColor: Colors.backgroundAccent,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: FontSizes.md,
-    color: Colors.text,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  inputRow: {
+  tipRow: {
     flexDirection: 'row',
-  },
-  distanceScroll: {
-    marginHorizontal: -Spacing.md,
-    paddingHorizontal: Spacing.md,
-  },
-  distanceOptions: {
-    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
   },
-  distanceChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.backgroundAccent,
-  },
-  distanceChipSelected: {
-    backgroundColor: Colors.primary,
-  },
-  distanceChipText: {
+  tipText: {
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
-  },
-  distanceChipTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: FontWeights.medium,
-  },
-  submitButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
-  submitButtonPressed: {
-    opacity: 0.8,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.medium,
-  },
-  section: {
-    marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.medium,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-  },
-  goalCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    ...Shadows.sm,
-  },
-  goalCardCompleted: {
-    opacity: 0.6,
-  },
-  checkbox: {
-    marginRight: Spacing.sm,
-  },
-  goalContent: {
     flex: 1,
-  },
-  goalName: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  goalNameCompleted: {
-    textDecorationLine: 'line-through',
-    color: Colors.textMuted,
-  },
-  goalMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    flexWrap: 'wrap',
-  },
-  goalTag: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
-  },
-  goalTagText: {
-    fontSize: FontSizes.xs,
-    color: Colors.primary,
-    fontWeight: FontWeights.medium,
-  },
-  goalDate: {
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-  },
-  goalTime: {
-    fontSize: FontSizes.sm,
-    color: Colors.primary,
-    fontWeight: FontWeights.medium,
-  },
-  goalNotes: {
-    fontSize: FontSizes.sm,
-    color: Colors.textMuted,
-    marginTop: Spacing.xs,
-    fontStyle: 'italic',
-  },
-  deleteButton: {
-    padding: Spacing.xs,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxl,
-  },
-  emptyIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.backgroundCard,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  emptyTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: FontWeights.semibold,
-    color: Colors.text,
-    marginBottom: Spacing.sm,
-  },
-  emptySubtitle: {
-    fontSize: FontSizes.md,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.xl,
+    lineHeight: 18,
   },
 });

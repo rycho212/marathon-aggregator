@@ -6,6 +6,7 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,6 +17,8 @@ import {
   FeaturedRaces,
   RaceGridSection,
 } from '@/components';
+import LocationChip from '@/components/LocationChip';
+import LocationModal from '@/components/LocationModal';
 import { Race, RaceFilters } from '@/data/types';
 import {
   filterRaces,
@@ -24,14 +27,21 @@ import {
   getMockRaces,
 } from '@/services/raceService';
 import { useSavedRaces } from '@/contexts/SavedRacesContext';
+import { useLocation } from '@/contexts/LocationContext';
+import { useGoals } from '@/contexts/GoalsContext';
+import { getRaceCoordinates, getDistanceMiles } from '@/services/locationService';
+import { scoreRaceForGoals } from '@/services/goalEngine';
 import { Colors, Spacing, FontSizes, FontWeights, BorderRadius } from '@/constants/theme';
 
 export default function DiscoverScreen() {
   const router = useRouter();
   const { toggleSaveRace, isRaceSaved, savedRaces } = useSavedRaces();
+  const { location } = useLocation();
+  const { confirmedTags, parsedGoals, hasGoals } = useGoals();
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [filters, setFilters] = useState<RaceFilters>({
     search: '',
     categories: [],
@@ -114,13 +124,48 @@ export default function DiscoverScreen() {
     };
   }, [upcomingRaces]);
 
+  // Races near user's location
+  const nearbyRaces = useMemo(() => {
+    if (!location) return [];
+    return races
+      .map((race) => {
+        const raceCoords = getRaceCoordinates(race.city, race.state);
+        if (!raceCoords) return { race, distance: Infinity };
+        const dist = getDistanceMiles(location.coordinates, raceCoords);
+        return { race, distance: dist };
+      })
+      .filter((r) => r.distance <= location.radius)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 20)
+      .map((r) => r.race);
+  }, [races, location]);
+
+  // AI-recommended races based on goals
+  const recommendedRaces = useMemo(() => {
+    if (!hasGoals) return [];
+    return races
+      .map((race) => ({
+        race,
+        score: scoreRaceForGoals(race, parsedGoals),
+      }))
+      .filter((r) => r.score > 40)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 20)
+      .map((r) => r.race);
+  }, [races, hasGoals, parsedGoals]);
+
   const isFiltering = filters.search !== '' || filters.categories.length > 0;
 
   // Hero text - using the "bold" style
   const renderHeroText = () => (
     <View style={styles.heroTextContainer}>
-      <Text style={styles.heroBoldTitle}>DISCOVER</Text>
-      <Text style={styles.heroBoldSubtitle}>Your next finish line</Text>
+      <View style={styles.heroRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.heroBoldTitle}>DISCOVER</Text>
+          <Text style={styles.heroBoldSubtitle}>Your next finish line</Text>
+        </View>
+        <LocationChip onPress={() => setLocationModalVisible(true)} />
+      </View>
     </View>
   );
 
@@ -163,6 +208,64 @@ export default function DiscoverScreen() {
 
   const renderCategorizedSections = () => (
     <View>
+      {/* Races Near You (only if location is set) */}
+      {nearbyRaces.length > 0 && (
+        <RaceGridSection
+          title={`Races Near ${location?.city || location?.state || 'You'}`}
+          icon="location"
+          races={nearbyRaces}
+          onRacePress={handleRacePress}
+          onSaveRace={toggleSaveRace}
+          isRaceSaved={isRaceSaved}
+        />
+      )}
+
+      {/* Set location prompt if not set */}
+      {!location && (
+        <Pressable
+          style={styles.locationPrompt}
+          onPress={() => setLocationModalVisible(true)}
+        >
+          <Ionicons name="location-outline" size={20} color={Colors.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.locationPromptTitle}>Find races near you</Text>
+            <Text style={styles.locationPromptSubtitle}>
+              Set your location to see nearby races
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+        </Pressable>
+      )}
+
+      {/* Recommended For You (only if goals are set) */}
+      {recommendedRaces.length > 0 && (
+        <RaceGridSection
+          title="Recommended For You"
+          icon="sparkles"
+          races={recommendedRaces}
+          onRacePress={handleRacePress}
+          onSaveRace={toggleSaveRace}
+          isRaceSaved={isRaceSaved}
+        />
+      )}
+
+      {/* Set goals prompt if not set */}
+      {!hasGoals && (
+        <Pressable
+          style={styles.locationPrompt}
+          onPress={() => router.push('/goals')}
+        >
+          <Ionicons name="sparkles-outline" size={20} color={Colors.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.locationPromptTitle}>Personalize your feed</Text>
+            <Text style={styles.locationPromptSubtitle}>
+              Tell us your goals for tailored recommendations
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+        </Pressable>
+      )}
+
       {/* Coming Soon - races in the next 30 days */}
       <RaceGridSection
         title="Coming Up Soon"
@@ -300,6 +403,11 @@ export default function DiscoverScreen() {
 
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
+
+      <LocationModal
+        visible={locationModalVisible}
+        onClose={() => setLocationModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -426,5 +534,32 @@ const styles = StyleSheet.create({
   },
   filteredSection: {
     marginTop: Spacing.sm,
+  },
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  locationPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    marginVertical: Spacing.sm,
+    padding: Spacing.md,
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  locationPromptTitle: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+    color: Colors.text,
+  },
+  locationPromptSubtitle: {
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
 });
