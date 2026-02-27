@@ -6,7 +6,6 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +17,7 @@ import {
   RaceGridSection,
 } from '@/components';
 import LocationChip from '@/components/LocationChip';
+import GoalsChip from '@/components/GoalsChip';
 import LocationModal from '@/components/LocationModal';
 import { Race, RaceFilters } from '@/data/types';
 import {
@@ -164,7 +164,10 @@ export default function DiscoverScreen() {
           <Text style={styles.heroBoldTitle}>DISCOVER</Text>
           <Text style={styles.heroBoldSubtitle}>Your next finish line</Text>
         </View>
+      </View>
+      <View style={styles.chipRow}>
         <LocationChip onPress={() => setLocationModalVisible(true)} />
+        <GoalsChip onPress={() => router.push('/goals')} />
       </View>
     </View>
   );
@@ -220,23 +223,6 @@ export default function DiscoverScreen() {
         />
       )}
 
-      {/* Set location prompt if not set */}
-      {!location && (
-        <Pressable
-          style={styles.locationPrompt}
-          onPress={() => setLocationModalVisible(true)}
-        >
-          <Ionicons name="location-outline" size={20} color={Colors.primary} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.locationPromptTitle}>Find races near you</Text>
-            <Text style={styles.locationPromptSubtitle}>
-              Set your location to see nearby races
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-        </Pressable>
-      )}
-
       {/* Recommended For You (only if goals are set) */}
       {recommendedRaces.length > 0 && (
         <RaceGridSection
@@ -247,23 +233,6 @@ export default function DiscoverScreen() {
           onSaveRace={toggleSaveRace}
           isRaceSaved={isRaceSaved}
         />
-      )}
-
-      {/* Set goals prompt if not set */}
-      {!hasGoals && (
-        <Pressable
-          style={styles.locationPrompt}
-          onPress={() => router.push('/goals')}
-        >
-          <Ionicons name="sparkles-outline" size={20} color={Colors.primary} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.locationPromptTitle}>Personalize your feed</Text>
-            <Text style={styles.locationPromptSubtitle}>
-              Tell us your goals for tailored recommendations
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-        </Pressable>
       )}
 
       {/* Coming Soon - races in the next 30 days */}
@@ -540,26 +509,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  locationPrompt: {
+  chipRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    marginHorizontal: Spacing.md,
-    marginVertical: Spacing.sm,
-    padding: Spacing.md,
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  locationPromptTitle: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
-    color: Colors.text,
-  },
-  locationPromptSubtitle: {
-    fontSize: FontSizes.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: Spacing.sm,
   },
 });

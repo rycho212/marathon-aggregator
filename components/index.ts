@@ -6,4 +6,5 @@ export { default as RaceGridSection } from './RaceGridSection';
 export { default as PersonalityQuiz } from './PersonalityQuiz';
 export { default as PersonalityProfile } from './PersonalityProfile';
 export { default as LocationChip } from './LocationChip';
+export { default as GoalsChip } from './GoalsChip';
 export { default as LocationModal } from './LocationModal';
